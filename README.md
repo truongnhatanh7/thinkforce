@@ -1,2 +1,13 @@
-# thinkforce
- Opensource AI Knowledge Fusion
+# ThinkForce | AI Knowledge Fusion
+
+## Description
+
+TBU
+
+## Contribution
+
+TBU
+
+## LICENSE
+
+MIT
