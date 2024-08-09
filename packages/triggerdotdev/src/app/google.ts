@@ -40,53 +40,63 @@ export class GoogleSearch {
     link: string,
     query: string
   ): Promise<string> {
-    const req = await fetch(link);
-    const text = await req.text();
-    const doc = new jsdom.JSDOM(text).window.document;
-    const content = Array.from(doc.querySelectorAll("p")).map(
-      (p, index) => `${index} ${p.textContent}`
-    );
-    const contentMinified = this.contentMinify(content.join("\n"));
-    if (contentMinified.length >= 40000) {
-      // 40,000 characters -> too large -> ignore
+    try {
+      const req = await fetch(link);
+      const text = await req.text();
+      const doc = new jsdom.JSDOM(text).window.document;
+      const content = Array.from(doc.querySelectorAll("p")).map(
+        (p, index) => `${index} ${p.textContent}`
+      );
+      const contentMinified = this.contentMinify(content.join("\n"));
+      if (contentMinified.length >= 40000) {
+        // 40,000 characters -> too large -> ignore
+        return "";
+      }
+
+      const SYSTEM_PROMPT = `
+      You are given a query and a list of sentences.
+      Your task is to determine which sentences are relevant to the query.
+      Ignore any sentences that are not relevant.
+      After that, write a brief summary of the relevant sentences.
+      Just return the summary only, don't add any irrelevant words.
+      `;
+
+      const USER_PROMPT = `
+      Given the query: "${query}"
+      Relevant sentences:
+      ${contentMinified}
+      `;
+
+      const model = await getModel("gpt-4o-mini", 0);
+      const completion = await model?.invoke([
+        {
+          type: "system",
+          content: SYSTEM_PROMPT,
+        },
+        {
+          type: "user",
+          content: USER_PROMPT,
+        },
+      ]);
+
+      this.inputTokens += completion?.usage_metadata?.input_tokens || 0;
+      this.outputTokens += completion?.usage_metadata?.output_tokens || 0;
+
+      logger.info("Parsing link to brief summary", {
+        link: link,
+        content: completion?.content.toString(),
+      });
+
+      return completion?.content.toString() || "";
+    } catch (e) {
+      logger.error("Error parsing link to brief summary", {
+        link: link,
+        error: e,
+      });
+
+      // Still executing task
       return "";
     }
-
-    const SYSTEM_PROMPT = `
-    You are given a query and a list of sentences.
-    Your task is to determine which sentences are relevant to the query.
-    Ignore any sentences that are not relevant.
-    After that, write a brief summary of the relevant sentences.
-    Just return the summary only, don't add any irrelevant words.
-    `;
-
-    const USER_PROMPT = `
-    Given the query: "${query}"
-    Relevant sentences:
-    ${contentMinified}
-    `;
-
-    const model = await getModel("gpt-4o-mini", 0);
-    const completion = await model?.invoke([
-      {
-        type: "system",
-        content: SYSTEM_PROMPT,
-      },
-      {
-        type: "user",
-        content: USER_PROMPT,
-      },
-    ]);
-
-    this.inputTokens += completion?.usage_metadata?.input_tokens || 0;
-    this.outputTokens += completion?.usage_metadata?.output_tokens || 0;
-
-    logger.info("Parsing link to brief summary", {
-      link: link,
-      content: completion?.content.toString(),
-    });
-
-    return completion?.content.toString() || "";
   }
 
   private async rewriteSearchQuery(
@@ -127,7 +137,7 @@ export class GoogleSearch {
   async search(
     query: string,
     originalTopic: string,
-    limit = 2
+    limit = 3
   ): Promise<TFGoogleSearchFusion> {
     query = await this.rewriteSearchQuery(query, originalTopic);
 
@@ -165,16 +175,23 @@ export class GoogleSearch {
       };
     }
 
-    const results = await Promise.all(
-      res?.items?.map(async (item) => {
-        const content = await this.parseLinkToBriefSummary(item.link, query);
-        return {
-          title: item.title,
-          link: item.link,
+    let results: TFGoogleSearchFusionData[] = [];
+    for (let i = 0; i < res.items.length; i++) {
+      const content = await this.parseLinkToBriefSummary(
+        res.items[i].link,
+        query
+      );
+      if (content !== "") {
+        results.push({
+          title: res.items[i].title,
+          link: res.items[i].link,
           content,
-        } as unknown as TFGoogleSearchFusionData;
-      })
-    );
+        });
+
+        // Currently only use 1 result, the other results are for backup if the first one failed
+        break;
+      }
+    }
 
     logger.info("Finished searching Google", {
       query,
@@ -191,7 +208,7 @@ export class GoogleSearch {
     });
 
     return {
-      data: results,
+      data: results || [],
     };
   }
 }
