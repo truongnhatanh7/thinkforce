@@ -47,8 +47,8 @@ export class GoogleSearch {
       (p, index) => `${index} ${p.textContent}`
     );
     const contentMinified = this.contentMinify(content.join("\n"));
-    if (contentMinified.length >= 10000) {
-      // 10,000 characters -> too large -> ignore
+    if (contentMinified.length >= 40000) {
+      // 40,000 characters -> too large -> ignore
       return "";
     }
 
@@ -97,6 +97,7 @@ export class GoogleSearch {
     const SYSTEM_PROMPT = `
     Given a heading of a outline and a topic.
     Your task is to create a google search query that is relevant to the topic and the current heading.
+    You should keep the result as short as possible since it will be used as a Google search query.
     Just return the rewritten query. Don't add any irrelevant words.
     `;
     const USER_PROMPT = `
@@ -120,7 +121,7 @@ export class GoogleSearch {
     logger.info("Rewriting search query", {
       query: completion?.content.toString(),
     });
-    return completion?.content.toString() || "";
+    return completion?.content.toString().replaceAll('"', "") || "";
   }
 
   async search(
@@ -153,6 +154,10 @@ export class GoogleSearch {
 
     const req = await fetch(searchUrl);
     const res = (await req.json()) as GoogleResponse;
+    logger.info("Google search response", {
+      query,
+      res,
+    });
 
     if (!res?.items || res?.items?.length === 0) {
       return {

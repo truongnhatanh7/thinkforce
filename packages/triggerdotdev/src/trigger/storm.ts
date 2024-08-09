@@ -25,7 +25,7 @@ export const stormieEngine = task({
       payload.userId = "anonymous" + new Date().getTime().toString();
     }
 
-    const stormie = new StormEngine("gpt-4o-mini", 0.2, payload.userId);
+    const stormie = new StormEngine("gpt-4o-mini", 0, payload.userId);
 
     const res = await stormie.writeArticle(payload.title, payload.outline);
     const elapsedTime = (Date.now() - startTime) / 1000;
