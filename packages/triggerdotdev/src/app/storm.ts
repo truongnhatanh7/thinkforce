@@ -207,13 +207,11 @@ export class StormEngine {
 		The outline use "# <Title>" to indicate section title , "## <Subsection Title>" to indicate subsection title.
 		You MUST follow these rules strictly:
 		1. Your response MUST be in markdown format.
-		2. Don't exceed 250 words.
+		2. You MUST include the references in the article. Use the format: <some fact that you used>[<Reference as the URL>]
 		3. Your writing must be relevant to the current section.
 		4. If your section is not the last section, you MUST NOT include a conclusion.
-		5. If your sub section is not the last section, you MUST NOT use "in overall" or "in conclusion".
-		6. If your section is not about conclusion, you MUST NOT conclude or summarize anything.
-		7. If you section is the sub-section, and there is a sub-section after it, you could use transitions if applicable.
-    8. You MUST include the references in the article.
+		5. If your section is not about conclusion, you MUST NOT conclude or summarize anything.
+		6. If you section is the sub-section, and there is a sub-section after it, you could use transitions if applicable.
 
 	Here are the outline:
 	${outline}
