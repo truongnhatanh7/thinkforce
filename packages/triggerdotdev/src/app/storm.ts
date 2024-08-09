@@ -206,11 +206,11 @@ export class StormEngine {
 		You will generate the article of the section using the provided references.
 		The outline use "# <Title>" to indicate section title , "## <Subsection Title>" to indicate subsection title.
 		You MUST follow these rules strictly:
-		1. Your response MUST be in markdown format.
-		2. You MUST include the references in the article. Use the format: <some fact that you used>[<Reference as the URL>]
+		1. Your response MUST be in markdown format. 
+		2. You MUST include the references in the article.
 		3. Your writing must be relevant to the current section.
 		4. If your section is not the last section, you MUST NOT include a conclusion.
-		5. If your section is not about conclusion, you MUST NOT conclude or summarize anything.
+    5. Only use the information and citations provided in the context.
 		6. If you section is the sub-section, and there is a sub-section after it, you could use transitions if applicable.
 
 	Here are the outline:
@@ -218,7 +218,7 @@ export class StormEngine {
 
 	Here are some context for the section:
   ${data
-    .map(
+    ?.map(
       (context, index) =>
         `${index + 1}. Title: ${context.title} | Reference: ${
           context.link
