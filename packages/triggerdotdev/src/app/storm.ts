@@ -7,6 +7,8 @@ import {
   TFGoogleSearchFusion,
   TFGoogleSearchFusionData,
 } from "@thinkforce/shared";
+import { StormOutlineGen } from "./outline";
+import { PolishEngine } from "./polish";
 
 export interface StormResponse {
   data: {
@@ -240,6 +242,8 @@ export class StormEngine {
     ]);
 
     if (response) {
+      this.inputGptTokens += response.usage_metadata?.input_tokens || 0;
+      this.outputGptTokens += response.usage_metadata?.output_tokens || 0;
       return response.content.toString();
     }
 
@@ -329,14 +333,17 @@ export class StormEngine {
     });
   }
 
-  async uploadToR2(topic: string, article: string) {
+  async uploadToR2(topic: string, article: string, prefix = "", ext = "md") {
+    // Replace topic / with _ -> break paths
+    topic = topic.replaceAll("/", "_");
+
     const s3Client = await this.newS3Client();
     logger.info("Init s3 client");
     const createdAt = new Date().getTime().toString();
-    const fileName = `${this.userId}/${topic.replaceAll(
+    const fileName = `${this.userId}/${prefix}${topic.replaceAll(
       "_",
       ""
-    )}_${createdAt}.md`;
+    )}_${createdAt}.${ext}`;
     // Convert article to md
     const putObjectCommand = new PutObjectCommand({
       Bucket: "hyper-document",
@@ -371,7 +378,11 @@ export class StormEngine {
 
     let _outline = outline;
     if (_outline === "") {
-      _outline = await this.generateOutline(topic);
+      const outlineEngine = new StormOutlineGen(this.modelName, 0.5);
+      const generatedOutline = await outlineEngine.generateOutline(topic);
+      _outline = generatedOutline.outline;
+      this.inputGptTokens += generatedOutline.inputTokens;
+      this.outputGptTokens += generatedOutline.outputTokens;
     }
 
     logger.info("[Outline]", { _outline });
@@ -396,9 +407,18 @@ export class StormEngine {
       article += sec + "\n\n";
     }
     logger.info("[Article]", { article });
+    await this.uploadToR2(topic, article, "original_");
+
+    const polishEngine = new PolishEngine();
+    const polishedArticle = await polishEngine.smallPolish(article);
+    article = polishedArticle.content;
+    this.inputGptTokens += polishedArticle.inputTokens;
+    this.outputGptTokens += polishedArticle.outputTokens;
+
+    logger.info("[Polished Article]", { article });
 
     // Upload to R2
-    await this.uploadToR2(topic, article);
+    await this.uploadToR2(topic, article, "polished_");
 
     return {
       data: {
