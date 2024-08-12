@@ -1,8 +1,10 @@
-# TEST 0
+# TEST 1
 
 ## Description
 
-Outline - GPT 4o mini (temp = 0.5) | Prompt: Constrained, strict about repeated subsections
+**Improved write article engine compared to T1**
+
+Outline - GPT 4o mini (temp = 0.5) | Prompt: Constrained
 
 Write - GPT 4o mini (temp = 0.5) + Google Search API (top k = 1)
 

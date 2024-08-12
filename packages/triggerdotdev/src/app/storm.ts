@@ -1,16 +1,8 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { envvars, logger } from "@trigger.dev/sdk/v3";
-import { TRIGGER_PROJECT_NAME } from "../../trigger.config";
-import { getModel } from "./completion";
-import { GoogleSearch } from "./google";
-import {
-  TFGoogleSearchFusion,
-  TFGoogleSearchFusionData,
-} from "@thinkforce/shared";
+import { logger } from "@trigger.dev/sdk/v3";
 import { StormOutlineGen } from "./outline";
 import { PolishEngine } from "./polish";
-import { WriteArticleEngine } from "./writeArticle";
 import { UploadEngine } from "./upload";
+import { WriteArticleEngine } from "./writeArticle";
 
 export interface StormResponse {
   data: {
@@ -72,7 +64,9 @@ export class StormEngine {
         topic
       );
       logger.info("[Section]", { sec });
-      article += sec + "\n\n";
+      this.inputGptTokens += sec.inputGptTokens;
+      this.outputGptTokens += sec.outputGptTokens;
+      article += sec.content + "\n\n";
     }
     logger.info("[Article]", { article });
 

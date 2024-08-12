@@ -188,7 +188,7 @@ export class GoogleSearch {
           content,
         });
 
-        // Currently only use 1 result, the other results are for backup if the first one failed
+        // IMPORTANT: Currently only use 1 result, the other results are for backup if the first one failed
         break;
       }
     }
