@@ -3,6 +3,7 @@ import { StormOutlineGen } from "./outline";
 import { PolishEngine } from "./polish";
 import { UploadEngine } from "./upload";
 import { WriteArticleEngine } from "./writeArticle";
+import { TFGoogleSearchFusionData } from "@thinkforce/shared";
 
 export interface StormResponse {
   data: {
@@ -19,12 +20,37 @@ export class StormEngine {
   userId: string;
   inputGptTokens: number;
   outputGptTokens: number;
+  sources: TFGoogleSearchFusionData[];
 
   constructor(runCfg: RunCfg, userId: string) {
     this.runCfg = runCfg;
     this.userId = userId;
     this.inputGptTokens = 0;
     this.outputGptTokens = 0;
+    this.sources = [];
+  }
+
+  private performReferenceTemplating(article: string) {
+    for (let i = 0; i < this.sources.length; i++) {
+      const source = this.sources[i];
+      article = article.replaceAll(
+        `[${source.link}]`,
+        `[[${i + 1}]](${source.link})`
+      );
+    }
+
+    const refSection = `
+    \n
+    # References
+    ${this.sources
+      .map((source, i) => {
+        return `${i + 1}. [${source.title}](${source.link})`;
+      })
+      .join("\n")}
+    `;
+    article += `\n\n${refSection}`;
+
+    return article;
   }
 
   async run(topic: string, outline = ""): Promise<StormResponse> {
@@ -64,10 +90,12 @@ export class StormEngine {
         topic
       );
       logger.info("[Section]", { sec });
+      this.sources.push(...sec.sources);
       this.inputGptTokens += sec.inputGptTokens;
       this.outputGptTokens += sec.outputGptTokens;
       article += sec.content + "\n\n";
     }
+  
     logger.info("[Article]", { article });
 
     const uploadEngine = new UploadEngine();
@@ -79,6 +107,8 @@ export class StormEngine {
     );
     const polishedArticle = await polishEngine.polish(article);
     article = polishedArticle.content;
+    article = this.performReferenceTemplating(article);
+
     this.inputGptTokens += polishedArticle.inputTokens;
     this.outputGptTokens += polishedArticle.outputTokens;
 
