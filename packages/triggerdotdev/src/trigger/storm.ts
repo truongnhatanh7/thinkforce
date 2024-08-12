@@ -25,9 +25,30 @@ export const stormieEngine = task({
       payload.userId = "anonymous" + new Date().getTime().toString();
     }
 
-    const stormie = new StormEngine("gpt-4o-mini", 0.7, payload.userId);
+    const runCfg: RunCfg = {
+      outlineCfg: {
+        modelName: "gpt-4o-mini",
+        temperature: 0.5,
+        inputPrice: 0.15,
+        outputPrice: 0.6,
+      },
+      writeArticleCfg: {
+        modelName: "gpt-4o-mini",
+        temperature: 0.5,
+        inputPrice: 0.15,
+        outputPrice: 0.6,
+      },
+      polishCfg: {
+        modelName: "gpt-4o-mini",
+        temperature: 0.5,
+        inputPrice: 0.15,
+        outputPrice: 0.6,
+      },
+    };
 
-    const res = await stormie.writeArticle(payload.title, payload.outline);
+    const stormie = new StormEngine(runCfg, payload.userId);
+
+    const res = await stormie.run(payload.title, payload.outline);
     const elapsedTime = (Date.now() - startTime) / 1000;
 
     logger.info("Result", {

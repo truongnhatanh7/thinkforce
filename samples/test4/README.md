@@ -1,8 +1,8 @@
-# TEST 3
+# TEST 4
 
 ## Description
 
-Outline - GPT 4o mini (temp = 0.5) | Prompt: Constrained, strict about repeated subsections
+Outline - GPT 4o (temp = 0.5) | Prompt: Constrained, strict about repeated subsections
 
 Write - GPT 4o mini (temp = 0.7) + Google Search API (top k = 1)
 
