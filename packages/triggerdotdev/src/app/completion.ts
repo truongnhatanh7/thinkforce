@@ -19,9 +19,23 @@ export const getModel = async (
       temperature: temperature,
       apiKey: openAIKey.value,
       streaming: streaming,
-      maxTokens: 2000,
+      maxTokens: -1,
+    });
+  } else if (modelName.includes("gpt-4o")) {
+    const openAIKey = await envvars.retrieve(
+      TRIGGER_PROJECT_NAME,
+      "dev",
+      "OPEN_AI_KEY"
+    );
+
+    return new ChatOpenAI({
+      model: "gpt-4o-2024-08-06",
+      temperature: temperature,
+      apiKey: openAIKey.value,
+      streaming: streaming,
+      maxTokens: -1,
     });
   } else {
-    // TODO: Add more models here
+    throw new Error("Model not found");
   }
 };
