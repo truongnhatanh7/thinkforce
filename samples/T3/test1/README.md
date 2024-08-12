@@ -2,7 +2,7 @@
 
 ## Description
 
-Very low temperature
+Add references
 
 Outline - GPT 4o mini (temp = 0) | Prompt: Constrained
 
@@ -13,3 +13,7 @@ Polish - GPT 4o mini (temp = 0)
 ### First test:
 
 Topic: Combustion Engine versus Electric motor
+
+### Second test:
+
+Topic: Big 4 Banks in Australia
