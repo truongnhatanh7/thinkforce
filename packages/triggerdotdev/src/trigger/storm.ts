@@ -28,19 +28,19 @@ export const stormieEngine = task({
     const runCfg: RunCfg = {
       outlineCfg: {
         modelName: "gpt-4o-mini",
-        temperature: 0.5,
+        temperature: 0,
         inputPrice: 0.15,
         outputPrice: 0.6,
       },
       writeArticleCfg: {
         modelName: "gpt-4o-mini",
-        temperature: 0.5,
+        temperature: 0,
         inputPrice: 0.15,
         outputPrice: 0.6,
       },
       polishCfg: {
         modelName: "gpt-4o-mini",
-        temperature: 0.5,
+        temperature: 0,
         inputPrice: 0.15,
         outputPrice: 0.6,
       },
