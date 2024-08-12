@@ -31,6 +31,7 @@ export class StormEngine {
   }
 
   private performReferenceTemplating(article: string) {
+    // Replace [link] to [number]
     for (let i = 0; i < this.sources.length; i++) {
       const source = this.sources[i];
       article = article.replaceAll(
@@ -39,14 +40,21 @@ export class StormEngine {
       );
     }
 
-    const refSection = `
-    \n
-    # References
-    ${this.sources
+    // Replace [number] to [[number]](link)
+    for (let i = 0; i < this.sources.length; i++) {
+      const source = this.sources[i];
+      article = article.replaceAll(
+        `[${i + 1}]`,
+        `[[${i + 1}]](${source.link})`
+      );
+    }
+
+    const refSection = `\n# References\n${this.sources
       .map((source, i) => {
         return `${i + 1}. [${source.title}](${source.link})`;
       })
       .join("\n")}
+
     `;
     article += `\n\n${refSection}`;
 
@@ -54,6 +62,7 @@ export class StormEngine {
   }
 
   async run(topic: string, outline = ""): Promise<StormResponse> {
+    // Step 1: Generate Outline
     let _outline = outline;
     if (_outline === "") {
       const outlineEngine = new StormOutlineGen(
@@ -77,7 +86,8 @@ export class StormEngine {
       }
     }
 
-    let article = "";
+    // Step 2: Write Article
+    let article = [];
     const writeArticleEngine = new WriteArticleEngine(
       this.runCfg.writeArticleCfg.modelName,
       this.runCfg.writeArticleCfg.temperature
@@ -93,34 +103,43 @@ export class StormEngine {
       this.sources.push(...sec.sources);
       this.inputGptTokens += sec.inputGptTokens;
       this.outputGptTokens += sec.outputGptTokens;
-      article += sec.content + "\n\n";
+      article.push(sec);
     }
-  
+
     logger.info("[Article]", { article });
 
-    const uploadEngine = new UploadEngine();
-    await uploadEngine.uploadToR2(this.userId, topic, article, "original_");
-
+    // Step 3: Post processing
+    // 3.1: Post Ref
     const polishEngine = new PolishEngine(
       this.runCfg.polishCfg.modelName,
       this.runCfg.polishCfg.temperature
     );
-    const polishedArticle = await polishEngine.polish(article);
-    article = polishedArticle.content;
-    article = this.performReferenceTemplating(article);
+    article = await polishEngine.performPostRef(article, this.sources);
 
+    logger.info("[Post Ref Article]", { article });
+    let textArticle = article.join("\n\n");
+
+    const uploadEngine = new UploadEngine();
+    await uploadEngine.uploadToR2(this.userId, topic, textArticle, "original_");
+
+    // 3.2: Polish
+    const polishedArticle = await polishEngine.polish(textArticle);
+    textArticle = polishedArticle.content;
+    textArticle = this.performReferenceTemplating(textArticle);
+
+    // 3.3: Log tokens
     this.inputGptTokens += polishedArticle.inputTokens;
     this.outputGptTokens += polishedArticle.outputTokens;
 
-    logger.info("[Polished Article]", { article });
+    logger.info("[Polished Article]", { textArticle });
 
     // Upload to R2
-    await uploadEngine.uploadToR2(this.userId, topic, article, "polished_");
+    await uploadEngine.uploadToR2(this.userId, topic, textArticle, "polished_");
 
     return {
       data: {
         fileName: "",
-        article: article,
+        article: textArticle,
       },
       metadata: {
         inputGptTokens: this.inputGptTokens,
