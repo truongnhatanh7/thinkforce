@@ -55,6 +55,8 @@ export interface GoogleSearchItem {
 
 export interface TFGoogleSearchFusion {
   data: TFGoogleSearchFusionData[];
+  inputTokens: number;
+  outputTokens: number;
 }
 
 export interface TFGoogleSearchFusionData {

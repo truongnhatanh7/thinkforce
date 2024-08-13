@@ -30,13 +30,14 @@ export class WriteArticleEngine {
   async writeSection(
     outline: string,
     section: string,
-    topic: string
+    topic: string,
+    sources: TFGoogleSearchFusionData[]
   ): Promise<WriteArticleResponse> {
     const model = await getModel(this.modelName, this.temperature);
 
-    // Using perplexity
-    const { data } = await this.search(section, topic);
-    this.sources = data;
+    // // Using perplexity
+    // const { data } = await this.search(section, topic);
+    // this.sources = data;
 
     const SYSTEM_PROMPT = `
     You are a educator writer.
@@ -58,7 +59,7 @@ export class WriteArticleEngine {
     Section that you HAVE TO write: ${section}
   
     Here are some context for the section:
-    ${this.sources
+    ${sources
       ?.map(
         (context, index) =>
           `${index + 1}. Title: ${context.title} | Reference: ${
@@ -103,8 +104,16 @@ export class WriteArticleEngine {
     };
   }
 
-  async search(query: string, topic: string): Promise<TFGoogleSearchFusion> {
-    const google = new GoogleSearch();
-    return await google.search(query, topic);
-  }
+  // private sourceArToObj(): { [key: string]: TFGoogleSearchFusionData } {
+  //   const obj: { [key: string]: TFGoogleSearchFusionData } = {};
+  //   for (let i = 0; i < this.sources.length; i++) {
+  //     obj[`${this.sources[i].link}`] = this.sources[i];
+  //   }
+  //   return obj;
+  // }
+
+  // async search(query: string, topic: string): Promise<TFGoogleSearchFusion> {
+  //   const google = new GoogleSearch(this.sourceArToObj());
+  //   return await google.search(query, topic);
+  // }
 }

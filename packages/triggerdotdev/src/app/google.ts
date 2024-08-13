@@ -1,6 +1,10 @@
 import { getModel } from "./completion";
 import { TRIGGER_PROJECT_NAME } from "../../trigger.config";
-import { EXCLUDE_PAGES, REDUCE_TOKEN_KWS } from "./google.helper";
+import {
+  EXCLUDE_EXTENSIONS,
+  EXCLUDE_PAGES,
+  REDUCE_TOKEN_KWS,
+} from "./google.helper";
 import {
   GoogleResponse,
   TFGoogleSearchFusion,
@@ -14,10 +18,12 @@ const GOOGLE_SEARCH_URL = "https://customsearch.googleapis.com/customsearch/v1";
 export class GoogleSearch {
   inputTokens: number;
   outputTokens: number;
+  sourceMap: { [key: string]: TFGoogleSearchFusionData };
 
-  constructor() {
+  constructor(sourceMap: { [key: string]: TFGoogleSearchFusionData }) {
     this.inputTokens = 0;
     this.outputTokens = 0;
+    this.sourceMap = sourceMap;
   }
 
   private contentMinify(content: string): string {
@@ -58,7 +64,11 @@ export class GoogleSearch {
       Your task is to determine which sentences are relevant to the query.
       Ignore any sentences that are not relevant.
       After that, write a brief summary of the relevant sentences.
-      Just return the summary only, don't add any irrelevant words.
+
+      You must also STRICTLY follow these rules:
+        1. The summary MUST highlight main points of the relevant sentences ONLY .
+        2. You MUST ONLY use information in the given sentences.
+        3. Just return the summary only, don't add any irrelevant words.
       `;
 
       const USER_PROMPT = `
@@ -137,7 +147,7 @@ export class GoogleSearch {
   async search(
     query: string,
     originalTopic: string,
-    limit = 3
+    limit = 10
   ): Promise<TFGoogleSearchFusion> {
     query = await this.rewriteSearchQuery(query, originalTopic);
 
@@ -172,11 +182,41 @@ export class GoogleSearch {
     if (!res?.items || res?.items?.length === 0) {
       return {
         data: [],
+        inputTokens: this.inputTokens,
+        outputTokens: this.outputTokens,
       };
     }
 
     let results: TFGoogleSearchFusionData[] = [];
     for (let i = 0; i < res.items.length; i++) {
+      // Handle search duplication
+      if (
+        res.items[i].link in this.sourceMap ||
+        EXCLUDE_EXTENSIONS.includes(res.items[i].link) // Cannot parse PDFs for now
+      ) {
+        logger.info("Skipping source", {
+          link: res.items[i].link,
+          reason: "Already in sources",
+        });
+        continue;
+      }
+
+      // Handle unsupported extensions
+      let skipDueToExt = false;
+      for (const ext of EXCLUDE_EXTENSIONS) {
+        if (res.items[i].link.includes(ext)) {
+          skipDueToExt = true;
+          break;
+        }
+      }
+      if (skipDueToExt) {
+        logger.info("Skipping source", {
+          link: res.items[i].link,
+          reason: "In exclude extensions",
+        });
+        continue;
+      }
+
       const content = await this.parseLinkToBriefSummary(
         res.items[i].link,
         query
@@ -188,8 +228,9 @@ export class GoogleSearch {
           content,
         });
 
-        // IMPORTANT: Currently only use 1 result, the other results are for backup if the first one failed
-        break;
+        if (results.length >= limit) {
+          break;
+        }
       }
     }
 
@@ -209,6 +250,8 @@ export class GoogleSearch {
 
     return {
       data: results || [],
+      inputTokens: this.inputTokens,
+      outputTokens: this.outputTokens,
     };
   }
 }
