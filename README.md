@@ -2,13 +2,15 @@
 
 ## Motivation
 
-This project is inspired by STORM framework created by Stanford University. The initial work of STORM was to study the ability of LLM to write Wikipedia articles - this sparks me another idea of using STORM to combine multiple knowledge sources to boost the ability of learning.
+This project is inspired by the **[STORM](https://arxiv.org/abs/2402.14207)** framework created by Stanford University. The initial work of STORM was to study the ability of LLM to write Wikipedia articles. This sparked another idea of using STORM to combine multiple knowledge sources to enhance learning capabilities. Therefore, I created this project to study about the ability of LLM in helping human learn new topics through reports.
 
 ## Description
 
 ### Overview ThinkForce RAG
 
-Overall steps to construct STORM
+**High-level procedures**
+
+*(Noted that this implementation might differ from the original STORM, since this is customized for knowledge curation purpose)*
 
 - Generate Outline
   - Generate related topics
@@ -23,10 +25,11 @@ Overall steps to construct STORM
   - Might perform post referencing
   - Polish
 - (Optional) Upload to R2
+  - (Optional) Convert to other formats
 
 ### Architecture
 
-Currently, there's only a Trigger.dev back-end. Trigger.dev is used to maintain a long running LLM process of generating reports (which could be up to 5-10mins)
+Currently, there's only a Trigger.dev back-end. Trigger.dev is used to maintain a long running LLM process of generating reports (which could be up to 5-10mins). More components like serverless, UIs will be updated in the future.
 
 ## How to run
 
@@ -48,17 +51,18 @@ pnpm install
 cd triggerdotdev
 pnpm run dev
 ```
+
 Use the "Test" feature of Trigger.dev to observe the result.
 
 ## Limitation and Future work
 
-- Despite the fact that this pipeline could be customized for many purposes, the intial pipeline costs a lot of money to run, hence any modifications to it could raise the bill up. So be careful while using it
-- Paragraph length limited by LMs context window
-- Gpt 4o mini tends to not follow instruction strictly
-- Cannot read PDFs from Google for now
-- The system sometimes malfuntioned due to LLM could not follow the instruction
+- Although this pipeline can be customized for various purposes, the initial pipeline is expensive to run. Therefore, any modifications to it may increase the cost. Please use it with caution.
+- The context window of the language models could affect the writing.
+- Gpt 4o mini tends to deviate from instructions.
+- Currently, PDFs from Google cannot be read.
+- The system may occasionally malfunction. This is a common problem in agentic system.
 
-TODO: Add proper front-end, set up infrastructure for a live version
+TODO: Add a front-end interface, set up infrastructure for a live version
 
 ## LICENSE
 
