@@ -78,3 +78,25 @@ export const EXCLUDE_PAGES = [
   "discord.com",
   "yahoo.com",
 ];
+
+export const EXCLUDE_EXTENSIONS = [
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".xls",
+  ".xlsx",
+  ".ppt",
+  ".pptx",
+  ".txt",
+  ".csv",
+  ".json",
+  ".xml",
+  ".zip",
+  ".rar",
+  ".tar",
+  ".gz",
+  ".7z",
+  ".mp3",
+  ".mp4",
+  ".avi",
+];

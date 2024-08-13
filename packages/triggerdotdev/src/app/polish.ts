@@ -83,6 +83,7 @@ export class PolishEngine {
     const SYSTEM_PROMPT = `
     You are a faithful text editor that is good at finding repeated information in the article and deleting them to make sure there is no repetition in the article. 
     You MUST keep other's non-repeated part in the article.
+    The article is in markdown format.
     You will keep the inline citations and article structure (indicated by "#", "##", etc.) appropriately. 
     You just return the polished article, don't add any extra information.
     Do your job for the following article.

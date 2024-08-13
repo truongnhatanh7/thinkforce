@@ -71,6 +71,7 @@ export class StormEngine {
       );
       const generatedOutline = await outlineEngine.generateOutline(topic);
       _outline = generatedOutline.outline;
+      this.sources = generatedOutline.sources;
       this.inputGptTokens += generatedOutline.inputTokens;
       this.outputGptTokens += generatedOutline.outputTokens;
     }
@@ -97,7 +98,8 @@ export class StormEngine {
       let sec = await writeArticleEngine.writeSection(
         _outline,
         sectionOutline,
-        topic
+        topic,
+        this.sources
       );
       logger.info("[Section]", { sec });
       this.sources.push(...sec.sources);
@@ -109,31 +111,23 @@ export class StormEngine {
     logger.info("[Article]", { article });
 
     // Step 3: Post processing
-    // 3.1: Post Ref
     const polishEngine = new PolishEngine(
       this.runCfg.polishCfg.modelName,
       this.runCfg.polishCfg.temperature
-    );
-    article = await polishEngine.performPostRef(article, this.sources);
+    );    
+    let textArticle = article.map((a) => a.content).join("\n\n");
 
-    logger.info("[Post Ref Article]", { article });
-    let textArticle = article.join("\n\n");
-
-    const uploadEngine = new UploadEngine();
-    await uploadEngine.uploadToR2(this.userId, topic, textArticle, "original_");
-
-    // 3.2: Polish
     const polishedArticle = await polishEngine.polish(textArticle);
     textArticle = polishedArticle.content;
     textArticle = this.performReferenceTemplating(textArticle);
-
-    // 3.3: Log tokens
+    
     this.inputGptTokens += polishedArticle.inputTokens;
     this.outputGptTokens += polishedArticle.outputTokens;
-
+    
     logger.info("[Polished Article]", { textArticle });
-
+    
     // Upload to R2
+    const uploadEngine = new UploadEngine();
     await uploadEngine.uploadToR2(this.userId, topic, textArticle, "polished_");
 
     return {
