@@ -33,16 +33,16 @@ export const stormieEngine = task({
         outputPrice: 0.3,
       },
       writeArticleCfg: {
-        modelName: "gemini-1.5-flash",
+        modelName: "gpt-4o-mini",
         temperature: 0,
-        inputPrice: 0.075,
-        outputPrice: 0.3,
+        inputPrice: 0.15,
+        outputPrice: 0.6,
       },
       polishCfg: {
-        modelName: "gemini-1.5-flash",
+        modelName: "gpt-4o-mini",
         temperature: 0,
-        inputPrice: 0.075,
-        outputPrice: 0.3,
+        inputPrice: 0.15,
+        outputPrice: 0.6,
       },
     };
 

@@ -81,11 +81,13 @@ export class PolishEngine {
   async polish(content: string): Promise<PolishResponse> {
     const model = await getModel(this.modelName, this.temperature);
     const SYSTEM_PROMPT = `
-    You are a faithful text editor that is good at finding repeated information in the article and deleting them to make sure there is no repetition in the article. 
-    You MUST keep other's non-repeated part in the article.
+    You are a faithful text editor that is good at polishing article before publish. 
     The article is in markdown format.
-    You will keep the inline citations and article structure (indicated by "#", "##", etc.) appropriately. 
-    You just return the polished article, don't add any extra information.
+    You MUST perform the following tasks:
+    - You MUST delete repetion part and keep other's non-repeated part in the article.
+    - You will keep the inline citations in this format (for example, "The capital of the United States is Washington, D.C.[1][3][7].").
+    - You will keep article structure (indicated by "#", "##", etc.) appropriately. 
+    - You just return the polished article, don't add any extra information.
     Do your job for the following article.
     `;
     const USER_PROMPT = `

@@ -100,7 +100,7 @@ export class StormOutlineGen {
   async generatePersonas(topic: string): Promise<string[]> {
     const model = await getModel(this.modelName, this.temperature);
     const SYSTEM_PROMPT = `
-    You are given a topic, you job is to generate 3 personas based on the topic.
+    You are given a topic, you job is to generate 4 personas based on the topic.
     For example, for the topic "Artificial Intelligence", you can generate personas like "AI Researcher", "AI Developer", "AI Ethicist".
     Return the result as a string with each persona separated by comma. For example: "AI Researcher,AI Developer,AI Ethicist".
     Don't add any irrelevant words. Just return the result only.
