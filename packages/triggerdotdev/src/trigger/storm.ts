@@ -27,22 +27,22 @@ export const stormieEngine = task({
 
     const runCfg: RunCfg = {
       outlineCfg: {
-        modelName: "gpt-4o-mini",
+        modelName: "gemini-1.5-flash",
         temperature: 0,
-        inputPrice: 0.15,
-        outputPrice: 0.6,
+        inputPrice: 0.075,
+        outputPrice: 0.3,
       },
       writeArticleCfg: {
-        modelName: "gpt-4o-mini",
+        modelName: "gemini-1.5-flash",
         temperature: 0,
-        inputPrice: 0.15,
-        outputPrice: 0.6,
+        inputPrice: 0.075,
+        outputPrice: 0.3,
       },
       polishCfg: {
-        modelName: "gpt-4o-mini",
+        modelName: "gemini-1.5-flash",
         temperature: 0,
-        inputPrice: 0.15,
-        outputPrice: 0.6,
+        inputPrice: 0.075,
+        outputPrice: 0.3,
       },
     };
 
@@ -50,6 +50,11 @@ export const stormieEngine = task({
 
     const res = await stormie.run(payload.title, payload.outline);
     const elapsedTime = (Date.now() - startTime) / 1000;
+
+    const worstLLMCost =
+      (res.metadata.inputGptTokens * 0.15 +
+        res.metadata.outputGptTokens * 0.3) /
+      1000000;
 
     logger.info("Result", {
       data: res.data.article,
@@ -60,19 +65,8 @@ export const stormieEngine = task({
       gptCost: {
         inputTokens: res.metadata.inputGptTokens,
         outputTokens: res.metadata.outputGptTokens,
-        inputCost: (res.metadata.inputGptTokens * 0.15) / 1000000,
-        outputCost: (res.metadata.outputGptTokens * 0.6) / 1000000,
-        totalGptCost:
-          (res.metadata.inputGptTokens * 0.15 +
-            res.metadata.outputGptTokens * 0.6) /
-          1000000,
       },
-      totalCost:
-        elapsedTime * 0.0000169 +
-        0.000025 +
-        (res.metadata.inputGptTokens * 0.15 +
-          res.metadata.outputGptTokens * 0.6) /
-          1000000,
+      totalCost: elapsedTime * 0.0000169 + 0.000025 + worstLLMCost,
     });
     return res;
   },

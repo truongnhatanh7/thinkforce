@@ -13,6 +13,7 @@ interface OutlineResponse {
   sources: TFGoogleSearchFusionData[];
   inputTokens: number;
   outputTokens: number;
+  searchCount: number;
 }
 
 export class StormOutlineGen {
@@ -24,6 +25,7 @@ export class StormOutlineGen {
   personas: PersonaPackage[];
   relatedTopics: string[];
   sources: TFGoogleSearchFusionData[];
+  searchCount: number;
 
   constructor(modelName: string, temperature: number) {
     this.modelName = modelName;
@@ -34,6 +36,7 @@ export class StormOutlineGen {
     this.personas = [];
     this.relatedTopics = [];
     this.sources = [];
+    this.searchCount = 0;
   }
 
   private async generateNaiveOutline(topic: string): Promise<string> {
@@ -41,9 +44,8 @@ export class StormOutlineGen {
     const SYSTEM_PROMPT = `
     Write an outline for an article about a given topic.
     Here is the format of your writing: Use "# Title" to indicate section title , "## Subsection Title" to indicate subsection title.
+    No more than 10 level 1 sections.
 		The last section should be "Conclusion".
-
-    Must be MAXIMUM 3 sections at all levels.
     `;
     const USER_PROMPT = `Here's the topic:\n\nTOPIC:${topic}`;
     const response = await model?.invoke([
@@ -69,7 +71,7 @@ export class StormOutlineGen {
   async generateRelatedTopics(topic: string): Promise<string[]> {
     const model = await getModel(this.modelName, this.temperature);
     const SYSTEM_PROMPT = `
-    You are given a topic, you job is to generate 3 related topics based on the topic.
+    You are given a topic, you job is to generate 5 related topics based on the topic.
     For example, for the topic "Gout Treatment", you can generate personas like "Natural Gout Treatment", "New Gout Treatment", "Gout Surgery".
     Return the result as a string with each topics separated by comma. For example: "Natural Gout Treatment,New Gout Treatment,Gout Surgery".
     Don't add any irrelevant words. Just return the result only.
@@ -242,6 +244,7 @@ export class StormOutlineGen {
         topic,
         answer: response.content.toString(),
       });
+      this.searchCount += 1;
       return response.content.toString();
     }
 
@@ -255,7 +258,6 @@ export class StormOutlineGen {
     Your task is to refine the outline based on the context.
     Here is the format of your writing: Use "# Title" to indicate section title , "## Subsection Title" to indicate subsection title.
     You could modify the draft outline based on given information.
-    Must be MAXIMUM 3 sections at all levels.
     Take a deep breath and think carefully about the context before refining the outline.
     `;
     const USER_PROMPT = `
@@ -323,6 +325,7 @@ export class StormOutlineGen {
       sources: this.sources,
       inputTokens: this.inputTokens,
       outputTokens: this.outputTokens,
+      searchCount: this.searchCount,
     };
   }
 }
