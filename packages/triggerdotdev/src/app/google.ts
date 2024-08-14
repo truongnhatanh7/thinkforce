@@ -69,6 +69,7 @@ export class GoogleSearch {
         1. The summary MUST highlight main points of the relevant sentences ONLY .
         2. You MUST ONLY use information in the given sentences.
         3. Just return the summary only, don't add any irrelevant words.
+        4. The summary MUST contains detailed informations that are key highlights that support the query.
       `;
 
       const USER_PROMPT = `

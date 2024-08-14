@@ -114,18 +114,18 @@ export class StormEngine {
     const polishEngine = new PolishEngine(
       this.runCfg.polishCfg.modelName,
       this.runCfg.polishCfg.temperature
-    );    
+    );
     let textArticle = article.map((a) => a.content).join("\n\n");
 
     const polishedArticle = await polishEngine.polish(textArticle);
     textArticle = polishedArticle.content;
     textArticle = this.performReferenceTemplating(textArticle);
-    
+
     this.inputGptTokens += polishedArticle.inputTokens;
     this.outputGptTokens += polishedArticle.outputTokens;
-    
+
     logger.info("[Polished Article]", { textArticle });
-    
+
     // Upload to R2
     const uploadEngine = new UploadEngine();
     await uploadEngine.uploadToR2(this.userId, topic, textArticle, "polished_");

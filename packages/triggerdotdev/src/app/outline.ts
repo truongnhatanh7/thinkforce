@@ -163,7 +163,7 @@ export class StormOutlineGen {
     You are a interviewer that is talking to a ${persona} about ${topic}
     Your job is to generate 3 questions that are relevant to the topic.
     Don't add any irrelevant words. Just return the result only.
-    Return the result as a string with each question separated by comma. For example: "What is the topic?,Why is the topic important?,How does the topic work?".
+    Return the result as a string with each question separated by comma. For example: What is the topic?,Why is the topic important?,How does the topic work?
     `;
     const USER_PROMPT = `
     Here's the topic:\n\nTOPIC:${topic}

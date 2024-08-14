@@ -1,8 +1,4 @@
-import {
-  TFGoogleSearchFusion,
-  TFGoogleSearchFusionData,
-} from "@thinkforce/shared";
-import { GoogleSearch } from "./google";
+import { TFGoogleSearchFusionData } from "@thinkforce/shared";
 import { getModel } from "./completion";
 
 export interface WriteArticleResponse {
@@ -103,17 +99,4 @@ export class WriteArticleEngine {
       sources: this.sources,
     };
   }
-
-  // private sourceArToObj(): { [key: string]: TFGoogleSearchFusionData } {
-  //   const obj: { [key: string]: TFGoogleSearchFusionData } = {};
-  //   for (let i = 0; i < this.sources.length; i++) {
-  //     obj[`${this.sources[i].link}`] = this.sources[i];
-  //   }
-  //   return obj;
-  // }
-
-  // async search(query: string, topic: string): Promise<TFGoogleSearchFusion> {
-  //   const google = new GoogleSearch(this.sourceArToObj());
-  //   return await google.search(query, topic);
-  // }
 }
