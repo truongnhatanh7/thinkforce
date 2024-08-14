@@ -1,5 +1,4 @@
 import { logger, task } from "@trigger.dev/sdk/v3";
-import { StormEngine } from "../app/storm";
 import { StormOutlineGen } from "../app/outline";
 export const outlineEngine = task({
   id: "outline-engine",
