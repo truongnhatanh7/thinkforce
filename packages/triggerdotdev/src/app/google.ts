@@ -70,6 +70,7 @@ export class GoogleSearch {
         2. You MUST ONLY use information in the given sentences.
         3. Just return the summary only, don't add any irrelevant words.
         4. The summary MUST contains detailed informations that are key highlights that support the query.
+        5. If applicable, the summary MUST includes quantitative data that are key highlights that support the query.
       `;
 
       const USER_PROMPT = `
@@ -78,7 +79,7 @@ export class GoogleSearch {
       ${contentMinified}
       `;
 
-      const model = await getModel("gpt-4o-mini", 0);
+      const model = await getModel("gemini-1.5-flash", 0);
       const completion = await model?.invoke([
         {
           type: "system",
@@ -114,7 +115,7 @@ export class GoogleSearch {
     query: string,
     topic: string
   ): Promise<string> {
-    const model = await getModel("gpt-4o-mini", 0);
+    const model = await getModel("gemini-1.5-flash", 0);
     const SYSTEM_PROMPT = `
     Given a heading of a outline and a topic.
     Your task is to create a google search query that is relevant to the topic and the current heading.
@@ -148,7 +149,7 @@ export class GoogleSearch {
   async search(
     query: string,
     originalTopic: string,
-    limit = 10
+    limit = 2
   ): Promise<TFGoogleSearchFusion> {
     query = await this.rewriteSearchQuery(query, originalTopic);
 
@@ -239,7 +240,7 @@ export class GoogleSearch {
       query,
       resultsLength: results.length,
       results,
-      model: "gpt-4o-mini", // TODO: In the future, update this to be dynamic
+      model: "gemini-1.5-flash", // TODO: In the future, update this to be dynamic
       inputTokens: this.inputTokens,
       outputTokens: this.outputTokens,
       inputTokensCost: 0.15,
