@@ -1,9 +1,11 @@
 import { logger } from "@trigger.dev/sdk/v3";
-import { StormOutlineGen } from "./outline";
+import { OutlineResponse, StormOutlineGen } from "./outline";
 import { PolishEngine } from "./polish";
 import { UploadEngine } from "./upload";
 import { WriteArticleEngine } from "./writeArticle";
 import { TFGoogleSearchFusionData } from "@thinkforce/shared";
+import { getGenCost } from "./completion";
+import { GOOGLE_SEARCH_PRICE } from "./const";
 
 export interface StormResponse {
   data: {
@@ -11,22 +13,25 @@ export interface StormResponse {
     article: string;
   };
   metadata: {
-    inputGptTokens: number;
-    outputGptTokens: number;
+    steps: {
+      name: string;
+      inputTokens?: number;
+      outputTokens?: number;
+      modelName: string;
+      price: number;
+      searchCost?: number;
+      searchCount?: number;
+    }[];
   };
 }
 export class StormEngine {
   runCfg: RunCfg;
   userId: string;
-  inputGptTokens: number;
-  outputGptTokens: number;
   sources: TFGoogleSearchFusionData[];
 
   constructor(runCfg: RunCfg, userId: string) {
     this.runCfg = runCfg;
     this.userId = userId;
-    this.inputGptTokens = 0;
-    this.outputGptTokens = 0;
     this.sources = [];
   }
 
@@ -61,31 +66,35 @@ export class StormEngine {
     return article;
   }
 
-  async run(topic: string, outline = ""): Promise<StormResponse> {
-    // Step 1: Generate Outline
-    let _outline = outline;
-    if (_outline === "") {
-      const outlineEngine = new StormOutlineGen(
-        this.runCfg.outlineCfg.modelName,
-        this.runCfg.outlineCfg.temperature
-      );
-      const generatedOutline = await outlineEngine.generateOutline(topic);
-      _outline = generatedOutline.outline;
-      this.sources = generatedOutline.sources;
-      this.inputGptTokens += generatedOutline.inputTokens;
-      this.outputGptTokens += generatedOutline.outputTokens;
-    }
-
-    logger.info("[Outline]", { _outline });
-
+  private transformOutline(outline: string) {
     let rr = [];
-    for (let line of _outline.split("\n")) {
+    for (let line of outline.split("\n")) {
       if (line.startsWith("#")) {
         rr.push(line);
       } else {
         rr[rr.length - 1] += "\n" + line;
       }
     }
+    return rr;
+  }
+
+  async run(topic: string, outline = ""): Promise<StormResponse> {
+    // Step 1: Generate Outline
+    const outlineEngine = new StormOutlineGen(
+      this.runCfg.outlineCfg.modelName,
+      this.runCfg.outlineCfg.temperature
+    );
+
+    let _outline: OutlineResponse = outlineEngine.initOutline();
+    if (outline === "") {
+      const generatedOutline = await outlineEngine.generateOutline(topic);
+      _outline = generatedOutline;
+    }
+    // TODO: Else, improve the outline
+
+    this.sources = _outline.sources;
+    let rr = this.transformOutline(_outline.outline);
+    logger.info("[Outline]", { _outline });
 
     // Step 2: Write Article
     let article = [];
@@ -94,17 +103,19 @@ export class StormEngine {
       this.runCfg.writeArticleCfg.temperature
     );
 
+    let writeInputTokens = 0;
+    let writeOutputTokens = 0;
     for (let sectionOutline of rr.slice(1)) {
       let sec = await writeArticleEngine.writeSection(
-        _outline,
+        _outline.outline,
         sectionOutline,
         topic,
         this.sources
       );
       logger.info("[Section]", { sec });
       this.sources.push(...sec.sources);
-      this.inputGptTokens += sec.inputGptTokens;
-      this.outputGptTokens += sec.outputGptTokens;
+      writeInputTokens += sec.inputGptTokens;
+      writeOutputTokens += sec.outputGptTokens;
       article.push(sec);
     }
 
@@ -121,9 +132,6 @@ export class StormEngine {
     textArticle = polishedArticle.content;
     textArticle = this.performReferenceTemplating(textArticle);
 
-    this.inputGptTokens += polishedArticle.inputTokens;
-    this.outputGptTokens += polishedArticle.outputTokens;
-
     logger.info("[Polished Article]", { textArticle });
 
     // Upload to R2
@@ -136,8 +144,45 @@ export class StormEngine {
         article: textArticle,
       },
       metadata: {
-        inputGptTokens: this.inputGptTokens,
-        outputGptTokens: this.outputGptTokens,
+        steps: [
+          {
+            name: "Outline",
+            inputTokens: _outline.inputTokens,
+            outputTokens: _outline.outputTokens,
+            modelName: this.runCfg.outlineCfg.modelName,
+            price:
+              getGenCost(
+                this.runCfg.outlineCfg.modelName,
+                _outline.inputTokens,
+                _outline.outputTokens
+              ) +
+              _outline.searchCount * GOOGLE_SEARCH_PRICE,
+            searchCost: _outline.searchCount * GOOGLE_SEARCH_PRICE,
+            searchCount: _outline.searchCount,
+          },
+          {
+            name: "Write Article",
+            inputTokens: writeInputTokens,
+            outputTokens: writeOutputTokens,
+            modelName: this.runCfg.writeArticleCfg.modelName,
+            price: getGenCost(
+              this.runCfg.writeArticleCfg.modelName,
+              writeInputTokens,
+              writeOutputTokens
+            ),
+          },
+          {
+            name: "Polish",
+            inputTokens: polishedArticle.inputTokens,
+            outputTokens: polishedArticle.outputTokens,
+            modelName: this.runCfg.polishCfg.modelName,
+            price: getGenCost(
+              this.runCfg.polishCfg.modelName,
+              polishedArticle.inputTokens,
+              polishedArticle.outputTokens
+            ),
+          },
+        ],
       },
     };
   }
