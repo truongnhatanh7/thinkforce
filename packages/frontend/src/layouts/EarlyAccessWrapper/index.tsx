@@ -1,13 +1,19 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import EarlyAccessAuth from "./EarlyAccessAuth";
+import { Toaster } from "@/components/ui/toaster";
 
 const EarlyAccessWrapper = () => {
   const [isAuth, setIsAuth] = useState(false);
 
-  useEffect(() => {});
-
-  return <div>{isAuth ? <Outlet /> : <EarlyAccessAuth />}</div>;
+  return (
+    <>
+      <main className="w-screen h-full">
+        {isAuth ? <Outlet /> : <EarlyAccessAuth setIsAuth={setIsAuth} />}
+      </main>
+      <Toaster />
+    </>
+  );
 };
 
 export default EarlyAccessWrapper;

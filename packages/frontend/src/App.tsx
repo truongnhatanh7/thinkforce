@@ -4,19 +4,15 @@ import EarlyAccessWrapper from "./layouts/EarlyAccessWrapper";
 import Gen from "./layouts/Gen";
 
 const router = createBrowserRouter([
-  // {
-  //   path: "/",
-  //   element: <EarlyAccessWrapper />,
-  //   children: [
-  //     {
-  //       path: "/",
-  //       element: <Gen />,
-  //     },
-  //   ],
-  // },
   {
     path: "/",
-    element: <Gen />,
+    element: <EarlyAccessWrapper />,
+    children: [
+      {
+        path: "/",
+        element: <Gen />,
+      },
+    ],
   },
 ]);
 

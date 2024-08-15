@@ -21,7 +21,13 @@ import { PassThrough } from "stream";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { EyeIcon } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
+import { supabase } from "@/supabase";
+import { useToast } from "@/components/ui/use-toast";
+
+interface EarlyAccessAuthProps {
+  setIsAuth: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
 const EAAuthSchema = z.object({
   username: z.string().min(2, {
@@ -30,7 +36,8 @@ const EAAuthSchema = z.object({
   password: z.string().min(6),
 });
 
-const EarlyAccessAuth = () => {
+const EarlyAccessAuth: React.FC<EarlyAccessAuthProps> = ({ setIsAuth }) => {
+  const { toast } = useToast();
   const [revealPassword, setRevealPassword] = useState(false);
 
   const form = useForm<z.infer<typeof EAAuthSchema>>({
@@ -42,7 +49,27 @@ const EarlyAccessAuth = () => {
   });
 
   const onSubmit = (values: z.infer<typeof EAAuthSchema>) => {
-    console.log(values);
+    signInWithEmail(values.username, values.password);
+  };
+
+  const signInWithEmail = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
+
+    if (error) {
+      console.error(error);
+      toast({
+        title: "Invalid credentials",
+        description: "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+    }
+
+    if (data.session) {
+      setIsAuth(true);
+    }
   };
 
   return (
