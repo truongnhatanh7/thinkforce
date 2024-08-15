@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -26,6 +27,9 @@ const GenSchema = z.object({
 });
 
 const Gen = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const intervalRef = useRef<number>();
+  const [runId, setRunId] = useState("");
   const form = useForm<z.infer<typeof GenSchema>>({
     resolver: zodResolver(GenSchema),
     defaultValues: {
@@ -34,8 +38,67 @@ const Gen = () => {
   });
 
   const onSubmit = (values: z.infer<typeof GenSchema>) => {
-    console.log(values);
+    handleSubmitGenRequest(values.topic);
   };
+
+  const handleSubmitGenRequest = async (topic: string) => {
+    setIsLoading(true);
+    try {
+      // Call edge func
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+      const req = await fetch(`${baseUrl}/functions/v1/backend/gen/emit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: "testUser",
+        }),
+      });
+      const res = await req.json();
+      console.log(topic, res);
+      setRunId(res.id);
+      setIsLoading(false);
+    } catch (error) {
+      console.error(error);
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckRunId = async (runId: string) => {
+    try {
+      const baseUrl = new URL(import.meta.env.VITE_SUPABASE_URL || "");
+      baseUrl.pathname = "/functions/v1/backend/gen/poll";
+      baseUrl.searchParams.set("runId", runId);
+
+      const req = await fetch(baseUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const res = await req.json();
+      console.log(res);
+      if (res.status !== "EXECUTING") {
+        clearInterval(intervalRef.current);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (runId) {
+        console.log("Checking runId", runId);
+        handleCheckRunId(runId);
+      }
+    }, 5000);
+    intervalRef.current = interval;
+
+    return () => clearInterval(interval);
+  }, [runId]);
+
   return (
     <div className="w-screen h-screen grid place-items-center">
       <div className="w-8/12">
@@ -75,8 +138,8 @@ const Gen = () => {
                   )}
                 />
 
-                <Button type="submit" className="mt-4">
-                  Generate
+                <Button type="submit" className="mt-4" disabled={isLoading}>
+                  {isLoading ? "Generating..." : "Generate"}
                 </Button>
               </form>
             </Form>

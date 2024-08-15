@@ -10,12 +10,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@thinkforce/triggerdotdev": "workspace:*",
-    "@thinkforce/shared": "workspace:*"
+    "@thinkforce/shared": "workspace:*",
+    "@thinkforce/triggerdotdev": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.5.4",
-    "@tsconfig/node18": "^18.2.4"
+    "@tsconfig/node18": "^18.2.4",
+    "@types/node": "^22.3.0",
+    "typescript": "^5.5.4"
   },
   "workspaces": [
     "packages/*"

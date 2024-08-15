@@ -1,29 +1,27 @@
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/supabase";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { EyeIcon } from "lucide-react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { PassThrough } from "stream";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { EyeIcon } from "lucide-react";
-import React, { useState } from "react";
-import { supabase } from "@/supabase";
-import { useToast } from "@/components/ui/use-toast";
+} from "@/components/ui/card";
 
 interface EarlyAccessAuthProps {
   setIsAuth: React.Dispatch<React.SetStateAction<boolean>>;
