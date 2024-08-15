@@ -1,5 +1,6 @@
 import { logger, task } from "@trigger.dev/sdk/v3";
 import { StormEngine } from "../app/storm";
+import { TRIGGER_INVOKE_COST, TRIGGER_TIME_COST } from "../app/const";
 
 export const stormieEngine = task({
   id: "stormie-engine",
@@ -12,7 +13,7 @@ export const stormieEngine = task({
   },
   queue: {
     name: "free-tier",
-    concurrencyLimit: 3,
+    concurrencyLimit: 2,
   },
   machine: {
     preset: "micro",
@@ -25,48 +26,43 @@ export const stormieEngine = task({
       payload.userId = "anonymous" + new Date().getTime().toString();
     }
 
+    // Set the configuration
     const runCfg: RunCfg = {
       outlineCfg: {
         modelName: "gemini-1.5-flash",
         temperature: 0,
-        inputPrice: 0.075,
-        outputPrice: 0.3,
       },
       writeArticleCfg: {
         modelName: "gpt-4o-mini",
         temperature: 0,
-        inputPrice: 0.15,
-        outputPrice: 0.6,
       },
       polishCfg: {
         modelName: "gpt-4o-mini",
         temperature: 0,
-        inputPrice: 0.15,
-        outputPrice: 0.6,
       },
     };
 
+    // Run the Storm Engine
     const stormie = new StormEngine(runCfg, payload.userId);
-
     const res = await stormie.run(payload.title, payload.outline);
-    const elapsedTime = (Date.now() - startTime) / 1000;
 
-    const worstLLMCost =
-      (res.metadata.inputGptTokens * 0.15 +
-        res.metadata.outputGptTokens * 0.3) /
-      1000000;
+    // Cost calculation
+    const elapsedTime = (Date.now() - startTime) / 1000;
+    const triggerCost = elapsedTime * TRIGGER_TIME_COST + TRIGGER_INVOKE_COST;
+    const totalCost =
+      res.metadata.steps.reduce((acc, step) => {
+        return acc + step.price;
+      }, 0) + triggerCost;
 
     logger.info("Result", {
       data: res.data.article,
       triggerCost: {
         time: elapsedTime / 1000, // convert to seconds
-        cost: elapsedTime * 0.0000169 + 0.000025,
+        cost: triggerCost,
       },
-      gptCost: {
-        inputTokens: res.metadata.inputGptTokens,
-        outputTokens: res.metadata.outputGptTokens,
-      },
-      totalCost: elapsedTime * 0.0000169 + 0.000025 + worstLLMCost,
+      stepsMeta: res.metadata.steps,
+      // trigger cost + gen cost at each step + search cost
+      totalCost: totalCost,
     });
     return res;
   },

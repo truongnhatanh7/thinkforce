@@ -8,7 +8,7 @@ interface PersonaPackage {
   qaPairs: { question: string; answer: string }[];
 }
 
-interface OutlineResponse {
+export interface OutlineResponse {
   outline: string;
   sources: TFGoogleSearchFusionData[];
   inputTokens: number;
@@ -37,6 +37,16 @@ export class StormOutlineGen {
     this.relatedTopics = [];
     this.sources = [];
     this.searchCount = 0;
+  }
+
+  initOutline(): OutlineResponse {
+    return {
+      outline: "",
+      sources: [],
+      inputTokens: 0,
+      outputTokens: 0,
+      searchCount: 0,
+    };
   }
 
   private async generateNaiveOutline(topic: string): Promise<string> {
