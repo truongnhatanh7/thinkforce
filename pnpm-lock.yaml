@@ -145,8 +145,8 @@ importers:
         specifier: ^0.2.6
         version: 0.2.6(langchain@0.2.13(@aws-sdk/client-s3@3.626.0)(@aws-sdk/credential-provider-node@3.624.0(@aws-sdk/client-sso-oidc@3.624.0(@aws-sdk/client-sts@3.624.0))(@aws-sdk/client-sts@3.624.0))(@langchain/google-genai@0.0.25)(@supabase/supabase-js@2.45.1)(fast-xml-parser@4.4.1)(ignore@5.3.1)(jsdom@24.1.1)(openai@4.55.0(zod@3.23.8))(ws@8.18.0))
       '@trigger.dev/sdk':
-        specifier: 3.0.0-beta.52
-        version: 3.0.0-beta.52(typescript@5.5.4)
+        specifier: 3.0.0-beta.53
+        version: 3.0.0-beta.53(typescript@5.5.4)
       jsdom:
         specifier: ^24.1.1
         version: 24.1.1
@@ -1413,16 +1413,16 @@ packages:
   '@swc/types@0.1.12':
     resolution: {integrity: sha512-wBJA+SdtkbFhHjTMYH+dEH1y4VpfGdAc2Kw/LK09i9bXd/K6j6PkDcFCEzb6iVfZMkPRrl/q0e3toqTAJdkIVA==}
 
-  '@trigger.dev/core-backend@3.0.0-beta.52':
-    resolution: {integrity: sha512-UQOfMjpFl6tgxfnEfb24KwFeKjSnRBf1dnbfxLo+8wA+E/5T7Dvq2BuWNrCArFI1LBCL2QL73zlGTf0ON9ovuQ==}
+  '@trigger.dev/core-backend@3.0.0-beta.53':
+    resolution: {integrity: sha512-+mtkIb2EZew79bKPLyXDKKW/H+3OqqxSwvNprZCWx5LB/i9tB8pAimzpzyGWcsC6vChSGYsbMSRjFoHti/K+Rw==}
     engines: {node: '>=18.0.0'}
 
-  '@trigger.dev/core@3.0.0-beta.52':
-    resolution: {integrity: sha512-t4DRibuiQjHXgauQBHS46xtyrVeUo9dHa5Cerl2XUgVSYFCAUKLDdP/a1gMgDtotS46vcSRIe3bIecKDqMXHbQ==}
+  '@trigger.dev/core@3.0.0-beta.53':
+    resolution: {integrity: sha512-xElTBEh1VXtIdPg3inVtGJaTKp/TnkpPNPjCpI0v7BjPa16XTpzSXI4V3Nzay/tNHjKsu0Uec9zslKZXeIi+Dw==}
     engines: {node: '>=18.0.0'}
 
-  '@trigger.dev/sdk@3.0.0-beta.52':
-    resolution: {integrity: sha512-fiT3n2udWfpGDnbIHiSs/HMRBeJqLej0p1mgMaV/9b5xu59G6FF8MP9cV9AS2llK4nmH7kE8ySpzqmi+lykXqA==}
+  '@trigger.dev/sdk@3.0.0-beta.53':
+    resolution: {integrity: sha512-wSAxIXH/YZxqv1dIul3k1KN0e6AoiUQLAFggfgZhFbsaV+FHIXVwQ7+DuKS7YtfqBZfao5MIwAsB815Qg7q6gQ==}
     engines: {node: '>=18.0.0'}
 
   '@tsconfig/node18@18.2.4':
@@ -4096,7 +4096,7 @@ snapshots:
       '@inquirer/figures': 1.0.5
       '@inquirer/type': 1.5.2
       '@types/mute-stream': 0.0.4
-      '@types/node': 22.1.0
+      '@types/node': 22.3.0
       '@types/wrap-ansi': 3.0.0
       ansi-escapes: 4.3.2
       cli-spinners: 2.9.2
@@ -5102,11 +5102,11 @@ snapshots:
     dependencies:
       '@swc/counter': 0.1.3
 
-  '@trigger.dev/core-backend@3.0.0-beta.52':
+  '@trigger.dev/core-backend@3.0.0-beta.53':
     dependencies:
       '@opentelemetry/api': 1.9.0
 
-  '@trigger.dev/core@3.0.0-beta.52':
+  '@trigger.dev/core@3.0.0-beta.53':
     dependencies:
       '@google-cloud/precise-date': 4.0.0
       '@opentelemetry/api': 1.9.0
@@ -5132,13 +5132,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@trigger.dev/sdk@3.0.0-beta.52(typescript@5.5.4)':
+  '@trigger.dev/sdk@3.0.0-beta.53(typescript@5.5.4)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/api-logs': 0.48.0
       '@opentelemetry/semantic-conventions': 1.25.1
-      '@trigger.dev/core': 3.0.0-beta.52
-      '@trigger.dev/core-backend': 3.0.0-beta.52
+      '@trigger.dev/core': 3.0.0-beta.53
+      '@trigger.dev/core-backend': 3.0.0-beta.53
       chalk: 5.3.0
       cronstrue: 2.50.0
       debug: 4.3.6
@@ -5191,7 +5191,7 @@ snapshots:
 
   '@types/mute-stream@0.0.4':
     dependencies:
-      '@types/node': 22.1.0
+      '@types/node': 22.3.0
 
   '@types/node-fetch@2.6.11':
     dependencies:
@@ -6625,7 +6625,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 22.1.0
+      '@types/node': 22.3.0
       long: 5.2.3
 
   psl@1.9.0: {}
