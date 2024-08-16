@@ -155,11 +155,11 @@ export class GoogleSearch {
     query = await this.rewriteSearchQuery(query, originalTopic);
 
     const googleApiKey = (
-      await envvars.retrieve(TRIGGER_PROJECT_NAME, "dev", "GOOGLE_API_KEY")
+      await envvars.retrieve("GOOGLE_API_KEY")
     ).value;
 
     const googleCseCx = (
-      await envvars.retrieve(TRIGGER_PROJECT_NAME, "dev", "GOOGLE_CSE_CX")
+      await envvars.retrieve("GOOGLE_CSE_CX")
     ).value;
 
     // Set up payload

@@ -18,13 +18,11 @@ import {
 export const getModel = async (
   modelName: string,
   temperature: number,
-  streaming = false
+  streaming = false,
 ) => {
   if (modelName.includes("gpt-4o-mini")) {
     const openAIKey = await envvars.retrieve(
-      TRIGGER_PROJECT_NAME,
-      "dev",
-      "OPEN_AI_KEY"
+      "OPEN_AI_KEY",
     );
 
     return new ChatOpenAI({
@@ -36,9 +34,7 @@ export const getModel = async (
     });
   } else if (modelName.includes("gpt-4o")) {
     const openAIKey = await envvars.retrieve(
-      TRIGGER_PROJECT_NAME,
-      "dev",
-      "OPEN_AI_KEY"
+      "OPEN_AI_KEY",
     );
 
     return new ChatOpenAI({
@@ -50,9 +46,7 @@ export const getModel = async (
     });
   } else if (modelName.includes("gemini-1.5-flash")) {
     const googleStudioAIApiKey = await envvars.retrieve(
-      TRIGGER_PROJECT_NAME,
-      "dev",
-      "GOOGLE_STUDIO_AI_KEY"
+      "GOOGLE_STUDIO_AI_KEY",
     );
 
     return new ChatGoogleGenerativeAI({
@@ -69,7 +63,7 @@ export const getModel = async (
 export const getGenCost = (
   modelName: string,
   inputTokens: number,
-  outputTokens: number
+  outputTokens: number,
 ) => {
   switch (modelName) {
     case "gpt-4o-mini":

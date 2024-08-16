@@ -18,6 +18,8 @@ app.post("/gen/emit", async (c) => {
   const userId = body.userId;
   const title = body.title;
 
+  console.log("[Start emitting]", userId, title);
+
   const supabase = createClient(
     Deno.env.get("X_SUPABASE_URL") ?? "",
     Deno.env.get("X_SUPABASE_ANON_KEY") ?? "",
@@ -30,7 +32,7 @@ app.post("/gen/emit", async (c) => {
 
   const tokens = await supabase.from("gen_usage").select(
     "tokens",
-  ).single();
+  ).eq("user_id", userId).single();
 
   if (tokens.error) {
     throw new Error(tokens.error?.message ?? "");
@@ -38,24 +40,6 @@ app.post("/gen/emit", async (c) => {
 
   if ((tokens!.data!.tokens as unknown as number) <= 0) {
     throw new Error("Not enough tokens");
-  }
-
-  // Call RPC check for is generating
-  const checkIsGen = await supabase.from("gen_usage").select(
-    "is_generating",
-  );
-
-  if (checkIsGen.error) {
-    throw new Error(checkIsGen.error?.message ?? "");
-  }
-
-  const updateIsGen = await supabase.from("gen_usage").update({
-    is_generating: true,
-  }).eq("user_id", userId);
-
-  if (updateIsGen.error) {
-    console.log(updateIsGen.error);
-    throw new Error("Failed to update is generating");
   }
 
   // Get current hour and minute
@@ -155,14 +139,13 @@ app.post("/gen/poll", async (c) => {
 
       const tokens = await supabase.from("gen_usage").select(
         "tokens",
-      ).single();
+      ).eq("user_id", userId).single();
 
       if (tokens.error) {
         throw new Error(tokens.error?.message ?? "");
       }
 
       const deductToken = await supabase.from("gen_usage").update({
-        is_generating: false,
         tokens: (tokens!.data!.tokens as unknown as number) - 10,
       }).eq("user_id", userId);
 
