@@ -74,7 +74,7 @@ app.post("/gen/emit", async (c) => {
               "name": "default",
               "concurrencyLimit": 1,
             },
-            "concurrencyKey": userId,
+            "concurrencyKey": "default",
             "idempotencyKey": userId + currentHourAndMinute,
           },
         }),

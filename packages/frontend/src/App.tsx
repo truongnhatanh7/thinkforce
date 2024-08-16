@@ -2,6 +2,8 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./App.css";
 import EarlyAccessWrapper from "./layouts/EarlyAccessWrapper";
 import Gen from "./layouts/Gen";
+import EarlyAccessAuth from "./layouts/EarlyAccessAuth/index.tsx";
+import { Toaster } from "./components/ui/toaster.tsx";
 
 const router = createBrowserRouter([
   {
@@ -9,10 +11,14 @@ const router = createBrowserRouter([
     element: <EarlyAccessWrapper />,
     children: [
       {
-        path: "/",
+        path: "",
         element: <Gen />,
       },
     ],
+  },
+  {
+    path: "/ea-auth",
+    element: <EarlyAccessAuth />,
   },
 ]);
 
@@ -20,6 +26,7 @@ function App() {
   return (
     <>
       <RouterProvider router={router} />
+      <Toaster />
     </>
   );
 }

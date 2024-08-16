@@ -23,6 +23,7 @@ import { useForm } from "react-hook-form";
 import Markdown from "react-markdown";
 import { z } from "zod";
 import { loadingPlaceholder } from "./loadingPlaceholder";
+import { useToast } from "@/components/ui/use-toast";
 
 const GenSchema = z.object({
   topic: z.string().min(10, {
@@ -33,6 +34,7 @@ const GenSchema = z.object({
 const Gen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingPlaceholderIdx, setLoadingPlaceholderIdx] = useState(0);
+  const [tokens, setTokens] = useState(0);
   const intervalRef = useRef<number>();
   const [runId, setRunId] = useState("");
   const [mdResult, setMdResult] = useState("");
@@ -42,6 +44,7 @@ const Gen = () => {
       topic: "",
     },
   });
+  const { toast } = useToast();
 
   const onSubmit = (values: z.infer<typeof GenSchema>) => {
     handleSubmitGenRequest(values.topic);
@@ -71,11 +74,11 @@ const Gen = () => {
           outline: "",
         }),
       });
+
       const res = await req.json();
-      console.log(topic, res);
       setRunId(res.id);
+      window.localStorage.setItem("lastRunId", res.id);
     } catch (error) {
-      console.error(error);
       setIsLoading(false);
     }
   };
@@ -107,14 +110,34 @@ const Gen = () => {
           // Set the preview
           setIsLoading(false);
           setMdResult(res.output.data.article || "");
+          window.localStorage.removeItem("lastRunId");
         } else {
           setIsLoading(false);
         }
       }
     } catch (error) {
       console.error(error);
+      window.localStorage.removeItem("lastRunId");
       setIsLoading(false);
     }
+  };
+
+  const handleCheckTokens = async () => {
+    const session = await supabase.auth.getSession();
+    const userId = session.data.session?.user.id || "";
+
+    const { data, error } = await supabase
+      .from("gen_usage")
+      .select("tokens")
+      .eq("user_id", userId)
+      .single();
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setTokens(data?.tokens || 0);
   };
 
   useEffect(() => {
@@ -140,10 +163,33 @@ const Gen = () => {
       if (loadingPlaceholderIdx === placeholdersLen - 1) {
         clearInterval(interval);
       }
-    }, 12000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [isLoading]);
+
+  useEffect(() => {
+    handleCheckTokens();
+  }, [mdResult]);
+
+  const checkLastRun = async () => {
+    // get last run id from local storage
+    const lastRunId = window.localStorage.getItem("lastRunId");
+    if (lastRunId) {
+      // Not finished yet
+      setIsLoading(true);
+      toast({
+        title: "Recovering last session",
+        description:
+          "You last report is not finished yet. We are recovering it for you.",
+      });
+      handleCheckRunId(lastRunId);
+    }
+  };
+
+  useEffect(() => {
+    checkLastRun();
+  }, []);
 
   return (
     <div className="w-screen h-screen grid place-items-center">
@@ -164,6 +210,8 @@ const Gen = () => {
                 product is not finalised yet, hence, the system could create
                 mistakes. Please double check the generated content.
               </i>
+              <br />
+              Your token balance: {tokens}
             </CardDescription>
           </CardHeader>
           <CardContent className="">

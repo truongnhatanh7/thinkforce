@@ -5,7 +5,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
@@ -22,10 +22,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
-interface EarlyAccessAuthProps {
-  setIsAuth: React.Dispatch<React.SetStateAction<boolean>>;
-}
+interface EarlyAccessAuthProps {}
 
 const EAAuthSchema = z.object({
   username: z.string().min(2, {
@@ -34,8 +33,9 @@ const EAAuthSchema = z.object({
   password: z.string().min(6),
 });
 
-const EarlyAccessAuth: React.FC<EarlyAccessAuthProps> = ({ setIsAuth }) => {
+const EarlyAccessAuth: React.FC<EarlyAccessAuthProps> = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [revealPassword, setRevealPassword] = useState(false);
 
   const form = useForm<z.infer<typeof EAAuthSchema>>({
@@ -66,7 +66,7 @@ const EarlyAccessAuth: React.FC<EarlyAccessAuthProps> = ({ setIsAuth }) => {
     }
 
     if (data.session) {
-      setIsAuth(true);
+      navigate("/");
     }
   };
 
