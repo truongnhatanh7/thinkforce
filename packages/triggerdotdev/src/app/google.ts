@@ -44,14 +44,15 @@ export class GoogleSearch {
 
   private async parseLinkToBriefSummary(
     link: string,
-    query: string
+    query: string,
   ): Promise<string> {
     try {
       const req = await fetch(link);
       const text = await req.text();
-      const doc = new jsdom.JSDOM(text).window.document;
+      const virtualConsole = new jsdom.VirtualConsole();
+      const doc = new jsdom.JSDOM(text, { virtualConsole }).window.document;
       const content = Array.from(doc.querySelectorAll("p")).map(
-        (p, index) => `${index} ${p.textContent}`
+        (p, index) => `${index} ${p.textContent}`,
       );
       const contentMinified = this.contentMinify(content.join("\n"));
       if (contentMinified.length >= 40000) {
@@ -113,7 +114,7 @@ export class GoogleSearch {
 
   private async rewriteSearchQuery(
     query: string,
-    topic: string
+    topic: string,
   ): Promise<string> {
     const model = await getModel("gemini-1.5-flash", 0);
     const SYSTEM_PROMPT = `
@@ -149,7 +150,7 @@ export class GoogleSearch {
   async search(
     query: string,
     originalTopic: string,
-    limit = 2
+    limit = 2,
   ): Promise<TFGoogleSearchFusion> {
     query = await this.rewriteSearchQuery(query, originalTopic);
 
@@ -221,7 +222,7 @@ export class GoogleSearch {
 
       const content = await this.parseLinkToBriefSummary(
         res.items[i].link,
-        query
+        query,
       );
       if (content !== "") {
         results.push({
@@ -245,8 +246,7 @@ export class GoogleSearch {
       outputTokens: this.outputTokens,
       inputTokensCost: 0.15,
       outputTokenCost: 0.6,
-      totalCost:
-        (this.inputTokens * 0.15) / 1000000 +
+      totalCost: (this.inputTokens * 0.15) / 1000000 +
         (this.outputTokens * 0.6) / 1000000,
     });
 

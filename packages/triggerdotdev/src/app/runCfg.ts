@@ -1,4 +1,5 @@
 interface RunCfg {
+  runId: string;
   outlineCfg: OutlineCfg;
   writeArticleCfg: WriteArticleCfg;
   polishCfg: PolishCfg;
