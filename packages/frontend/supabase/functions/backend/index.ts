@@ -2,20 +2,12 @@ import { Hono } from "jsr:@hono/hono";
 import { cors } from "jsr:@hono/hono/cors";
 import { GetObjectCommand, S3Client } from "npm:@aws-sdk/client-s3";
 import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner";
-// import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const functionName = "backend";
 const app = new Hono().basePath(`/${functionName}`);
 
 app.use(cors());
-
-// Init supabase client
-// const connectionString = Deno.env.get("X_SUPABASE_DB_URL")!;
-
-app.post("/hello-world", async (c) => {
-  const { name } = await c.req.json();
-  return new Response(`Hello ${name}!`);
-});
 
 app.get("/", (c) => {
   return c.json({ message: "Hello, World!" });
@@ -26,32 +18,45 @@ app.post("/gen/emit", async (c) => {
   const userId = body.userId;
   const title = body.title;
 
-  // const supabase = createClient(
-  //   Deno.env.get("X_SUPABASE_URL") ?? "",
-  //   Deno.env.get("X_SUPABASE_ANON_KEY") ?? "",
-  //   {
-  //     global: {
-  //       headers: { Authorization: c.req.header("Authorization") || "" },
-  //     },
-  //   },
-  // );
+  const supabase = createClient(
+    Deno.env.get("X_SUPABASE_URL") ?? "",
+    Deno.env.get("X_SUPABASE_ANON_KEY") ?? "",
+    {
+      global: {
+        headers: { Authorization: c.req.header("Authorization") || "" },
+      },
+    },
+  );
 
-  // // Call RPC check for is generating
-  // const checkIsGen = await supabase.from("gen_usage").select(
-  //   "is_generating",
-  // );
+  const tokens = await supabase.from("gen_usage").select(
+    "tokens",
+  ).single();
 
-  // if (checkIsGen.error) {
-  //   throw new Error(checkIsGen.error?.message ?? "");
-  // }
+  if (tokens.error) {
+    throw new Error(tokens.error?.message ?? "");
+  }
 
-  // const updateIsGen = await supabase.from("gen_usage").update({
-  //   is_generating: true,
-  // });
+  if ((tokens!.data!.tokens as unknown as number) <= 0) {
+    throw new Error("Not enough tokens");
+  }
 
-  // if (updateIsGen.error) {
-  //   throw new Error("Failed to update is generating");
-  // }
+  // Call RPC check for is generating
+  const checkIsGen = await supabase.from("gen_usage").select(
+    "is_generating",
+  );
+
+  if (checkIsGen.error) {
+    throw new Error(checkIsGen.error?.message ?? "");
+  }
+
+  const updateIsGen = await supabase.from("gen_usage").update({
+    is_generating: true,
+  }).eq("user_id", userId);
+
+  if (updateIsGen.error) {
+    console.log(updateIsGen.error);
+    throw new Error("Failed to update is generating");
+  }
 
   // Get current hour and minute
   // Only be able to trigger 1 event per minute
@@ -59,10 +64,9 @@ app.post("/gen/emit", async (c) => {
     hour: "2-digit",
     minute: "2-digit",
   });
-  console.log(currentHourAndMinute);
 
   // Emit event to trigger.dev
-  const taskName = "stormie-engine";
+  const taskName = "stormie-engine-debug";
   try {
     const req = await fetch(
       `https://api.trigger.dev/api/v1/tasks/${taskName}/trigger`,
@@ -92,8 +96,8 @@ app.post("/gen/emit", async (c) => {
         }),
       },
     );
+
     const res = await req.json();
-    console.log(res);
     return c.json(res);
   } catch (e) {
     console.log(e);
@@ -105,7 +109,16 @@ app.post("/gen/poll", async (c) => {
   const runId = c.req.queries("runId") || "";
   const userId = c.req.queries("userId") || "";
 
-  // TODO: If completed, call RPC to deduct money and update is_generating
+  const supabase = createClient(
+    Deno.env.get("X_SUPABASE_URL") ?? "",
+    Deno.env.get("X_SUPABASE_ANON_KEY") ?? "",
+    {
+      global: {
+        headers: { Authorization: c.req.header("Authorization") || "" },
+      },
+    },
+  );
+
   try {
     const req = await fetch(
       `https://api.trigger.dev/api/v3/runs/${runId}`,
@@ -130,7 +143,6 @@ app.post("/gen/poll", async (c) => {
           secretAccessKey: Deno.env.get("R2_SECRET_KEY") || "",
         },
       });
-      console.log("s3");
 
       const signedUrl = await getSignedUrl(
         S3,
@@ -141,7 +153,23 @@ app.post("/gen/poll", async (c) => {
         { expiresIn: 3600 },
       );
 
-      console.log(signedUrl);
+      const tokens = await supabase.from("gen_usage").select(
+        "tokens",
+      ).single();
+
+      if (tokens.error) {
+        throw new Error(tokens.error?.message ?? "");
+      }
+
+      const deductToken = await supabase.from("gen_usage").update({
+        is_generating: false,
+        tokens: (tokens!.data!.tokens as unknown as number) - 10,
+      }).eq("user_id", userId);
+
+      if (deductToken.error) {
+        console.log(deductToken.error);
+        throw new Error("Failed to deduct token");
+      }
 
       return c.json({
         ...res,
@@ -151,6 +179,15 @@ app.post("/gen/poll", async (c) => {
     return c.json(res);
   } catch (e) {
     console.log(e);
+
+    const resetIsGenerating = await supabase.from("gen_usage").update({
+      is_generating: false,
+    }).eq("user_id", userId);
+
+    if (resetIsGenerating.error) {
+      console.log(resetIsGenerating.error);
+      throw new Error("Failed to reset is generating");
+    }
   }
 });
 

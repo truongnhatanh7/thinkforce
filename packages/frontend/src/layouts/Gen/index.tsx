@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/supabase";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -48,15 +49,23 @@ const Gen = () => {
     setIsLoading(true);
     try {
       // Call edge func
+      const session = await supabase.auth.getSession();
+      const accessToken = session.data.session?.access_token;
+      const userId = session.data.session?.user.id;
+      if (!accessToken) {
+        throw new Error("Access token not found");
+      }
+
       const baseUrl = import.meta.env.VITE_SUPABASE_URL || "";
       const req = await fetch(`${baseUrl}/functions/v1/backend/gen/emit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           title: topic,
-          userId: "testUser",
+          userId: userId,
           outline: "",
         }),
       });
@@ -71,18 +80,24 @@ const Gen = () => {
 
   const handleCheckRunId = async (runId: string) => {
     try {
+      const session = await supabase.auth.getSession();
+      const accessToken = session.data.session?.access_token;
+      const userId = session.data.session?.user.id || "";
       const baseUrl = new URL(import.meta.env.VITE_SUPABASE_URL || "");
       baseUrl.pathname = "/functions/v1/backend/gen/poll";
       baseUrl.searchParams.set("runId", runId);
+      baseUrl.searchParams.set("userId", userId);
 
       const req = await fetch(baseUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
       });
+
       const res = await req.json();
-      console.log(res);
+
       if (res.status !== "EXECUTING") {
         clearInterval(intervalRef.current);
 
