@@ -66,7 +66,7 @@ app.post("/gen/emit", async (c) => {
   });
 
   // Emit event to trigger.dev
-  const taskName = "stormie-engine-debug";
+  const taskName = "stormie-engine";
   try {
     const req = await fetch(
       `https://api.trigger.dev/api/v1/tasks/${taskName}/trigger`,
