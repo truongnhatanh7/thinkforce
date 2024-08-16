@@ -7,20 +7,14 @@ export class UploadEngine {
 
   async newS3Client(): Promise<S3Client> {
     const endpoint = await envvars.retrieve(
-      TRIGGER_PROJECT_NAME,
-      "dev",
       "CLOUDFLARE_R2_ENDPOINT",
     );
 
     const accessKeyId = await envvars.retrieve(
-      TRIGGER_PROJECT_NAME,
-      "dev",
       "CLOUDFLARE_R2_ACCESS_KEY_ID",
     );
 
     const secretAccessKey = await envvars.retrieve(
-      TRIGGER_PROJECT_NAME,
-      "dev",
       "CLOUDFLARE_R2_SECRET_ACCESS_KEY",
     );
 

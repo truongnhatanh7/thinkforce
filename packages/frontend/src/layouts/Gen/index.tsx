@@ -22,6 +22,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import Markdown from "react-markdown";
 import { z } from "zod";
+import { loadingPlaceholder } from "./loadingPlaceholder";
 
 const GenSchema = z.object({
   topic: z.string().min(10, {
@@ -31,6 +32,7 @@ const GenSchema = z.object({
 
 const Gen = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingPlaceholderIdx, setLoadingPlaceholderIdx] = useState(0);
   const intervalRef = useRef<number>();
   const [runId, setRunId] = useState("");
   const [mdResult, setMdResult] = useState("");
@@ -127,6 +129,22 @@ const Gen = () => {
     return () => clearInterval(interval);
   }, [runId]);
 
+  useEffect(() => {
+    if (!isLoading) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      const placeholdersLen = loadingPlaceholder.length;
+      setLoadingPlaceholderIdx((prevIdx) => (prevIdx + 1) % placeholdersLen);
+      if (loadingPlaceholderIdx === placeholdersLen - 1) {
+        clearInterval(interval);
+      }
+    }, 12000);
+
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
   return (
     <div className="w-screen h-screen grid place-items-center">
       <div className="w-8/12 py-6">
@@ -175,6 +193,11 @@ const Gen = () => {
                     "Generate"
                   )}
                 </Button>
+                {isLoading && (
+                  <div className="">
+                    {loadingPlaceholder[loadingPlaceholderIdx]}
+                  </div>
+                )}
               </form>
             </Form>
             <div className="my-4">
