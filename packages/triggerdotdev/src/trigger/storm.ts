@@ -1,4 +1,4 @@
-import { logger, task } from "@trigger.dev/sdk/v3";
+import { Context, logger, task } from "@trigger.dev/sdk/v3";
 import { StormEngine } from "../app/storm";
 import { TRIGGER_INVOKE_COST, TRIGGER_TIME_COST } from "../app/const";
 
@@ -18,9 +18,13 @@ export const stormieEngine = task({
   machine: {
     preset: "micro",
   },
-  run: async (payload: { title: string; outline: string; userId?: string }) => {
+  run: async (
+    payload: { title: string; outline: string; userId?: string },
+    parmas: { ctx: Context },
+  ) => {
     // Start time
     const startTime = Date.now();
+    const runId = parmas.ctx.run.id;
 
     if (!payload.userId) {
       payload.userId = "anonymous" + new Date().getTime().toString();
@@ -28,6 +32,7 @@ export const stormieEngine = task({
 
     // Set the configuration
     const runCfg: RunCfg = {
+      runId: runId,
       outlineCfg: {
         modelName: "gemini-1.5-flash",
         temperature: 0,
@@ -49,10 +54,9 @@ export const stormieEngine = task({
     // Cost calculation
     const elapsedTime = (Date.now() - startTime) / 1000;
     const triggerCost = elapsedTime * TRIGGER_TIME_COST + TRIGGER_INVOKE_COST;
-    const totalCost =
-      res.metadata.steps.reduce((acc, step) => {
-        return acc + step.price;
-      }, 0) + triggerCost;
+    const totalCost = res.metadata.steps.reduce((acc, step) => {
+      return acc + step.price;
+    }, 0) + triggerCost;
 
     logger.info("Result", {
       data: res.data.article,

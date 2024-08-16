@@ -9,19 +9,19 @@ export class UploadEngine {
     const endpoint = await envvars.retrieve(
       TRIGGER_PROJECT_NAME,
       "dev",
-      "CLOUDFLARE_R2_ENDPOINT"
+      "CLOUDFLARE_R2_ENDPOINT",
     );
 
     const accessKeyId = await envvars.retrieve(
       TRIGGER_PROJECT_NAME,
       "dev",
-      "CLOUDFLARE_R2_ACCESS_KEY_ID"
+      "CLOUDFLARE_R2_ACCESS_KEY_ID",
     );
 
     const secretAccessKey = await envvars.retrieve(
       TRIGGER_PROJECT_NAME,
       "dev",
-      "CLOUDFLARE_R2_SECRET_ACCESS_KEY"
+      "CLOUDFLARE_R2_SECRET_ACCESS_KEY",
     );
 
     return new S3Client({
@@ -35,29 +35,23 @@ export class UploadEngine {
   }
 
   async uploadToR2(
+    runId: string,
     userId: string,
-    topic: string,
     article: string,
     prefix = "",
-    ext = "md"
+    ext = "md",
   ) {
-    // Replace topic / with _ -> break paths
-    topic = topic.replaceAll("/", "_");
-
     const s3Client = await this.newS3Client();
     logger.info("Init s3 client");
+
     const createdAt = new Date().getTime().toString();
-    const fileName = `${userId}/${prefix}${topic.replaceAll(
-      "_",
-      ""
-    )}_${createdAt}.${ext}`;
-    // Convert article to md
+    const fileName = `${userId}/${prefix}${runId}.${ext}`;
+
     const putObjectCommand = new PutObjectCommand({
       Bucket: "hyper-document",
       Key: fileName,
       Body: article,
       Metadata: {
-        topic: topic,
         created_at: createdAt,
       },
     });

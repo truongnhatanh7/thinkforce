@@ -1,12 +1,25 @@
-import { testHello } from "@thinkforce/triggerdotdev";
-import { shared } from "@thinkforce/shared";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./App.css";
+import EarlyAccessWrapper from "./layouts/EarlyAccessWrapper";
+import Gen from "./layouts/Gen";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <EarlyAccessWrapper />,
+    children: [
+      {
+        path: "/",
+        element: <Gen />,
+      },
+    ],
+  },
+]);
 
 function App() {
   return (
     <>
-      {testHello()}
-      {shared}
+      <RouterProvider router={router} />
     </>
   );
 }

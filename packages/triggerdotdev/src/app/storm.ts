@@ -41,7 +41,7 @@ export class StormEngine {
       const source = this.sources[i];
       article = article.replaceAll(
         `[${source.link}]`,
-        `[[${i + 1}]](${source.link})`
+        `[[${i + 1}]](${source.link})`,
       );
     }
 
@@ -50,15 +50,17 @@ export class StormEngine {
       const source = this.sources[i];
       article = article.replaceAll(
         `[${i + 1}]`,
-        `[[${i + 1}]](${source.link})`
+        `[[${i + 1}]](${source.link})`,
       );
     }
 
-    const refSection = `\n# References\n${this.sources
-      .map((source, i) => {
-        return `${i + 1}. [${source.title}](${source.link})`;
-      })
-      .join("\n")}
+    const refSection = `\n# References\n${
+      this.sources
+        .map((source, i) => {
+          return `${i + 1}. [${source.title}](${source.link})`;
+        })
+        .join("\n")
+    }
 
     `;
     article += `\n\n${refSection}`;
@@ -82,7 +84,7 @@ export class StormEngine {
     // Step 1: Generate Outline
     const outlineEngine = new StormOutlineGen(
       this.runCfg.outlineCfg.modelName,
-      this.runCfg.outlineCfg.temperature
+      this.runCfg.outlineCfg.temperature,
     );
 
     let _outline: OutlineResponse = outlineEngine.initOutline();
@@ -100,7 +102,7 @@ export class StormEngine {
     let article = [];
     const writeArticleEngine = new WriteArticleEngine(
       this.runCfg.writeArticleCfg.modelName,
-      this.runCfg.writeArticleCfg.temperature
+      this.runCfg.writeArticleCfg.temperature,
     );
 
     let writeInputTokens = 0;
@@ -110,7 +112,7 @@ export class StormEngine {
         _outline.outline,
         sectionOutline,
         topic,
-        this.sources
+        this.sources,
       );
       logger.info("[Section]", { sec });
       this.sources.push(...sec.sources);
@@ -124,7 +126,7 @@ export class StormEngine {
     // Step 3: Post processing
     const polishEngine = new PolishEngine(
       this.runCfg.polishCfg.modelName,
-      this.runCfg.polishCfg.temperature
+      this.runCfg.polishCfg.temperature,
     );
     let textArticle = article.map((a) => a.content).join("\n\n");
 
@@ -136,7 +138,11 @@ export class StormEngine {
 
     // Upload to R2
     const uploadEngine = new UploadEngine();
-    await uploadEngine.uploadToR2(this.userId, topic, textArticle, "polished_");
+    await uploadEngine.uploadToR2(
+      this.runCfg.runId,
+      this.userId,
+      textArticle,
+    );
 
     return {
       data: {
@@ -150,12 +156,11 @@ export class StormEngine {
             inputTokens: _outline.inputTokens,
             outputTokens: _outline.outputTokens,
             modelName: this.runCfg.outlineCfg.modelName,
-            price:
-              getGenCost(
-                this.runCfg.outlineCfg.modelName,
-                _outline.inputTokens,
-                _outline.outputTokens
-              ) +
+            price: getGenCost(
+              this.runCfg.outlineCfg.modelName,
+              _outline.inputTokens,
+              _outline.outputTokens,
+            ) +
               _outline.searchCount * GOOGLE_SEARCH_PRICE,
             searchCost: _outline.searchCount * GOOGLE_SEARCH_PRICE,
             searchCount: _outline.searchCount,
@@ -168,7 +173,7 @@ export class StormEngine {
             price: getGenCost(
               this.runCfg.writeArticleCfg.modelName,
               writeInputTokens,
-              writeOutputTokens
+              writeOutputTokens,
             ),
           },
           {
@@ -179,7 +184,7 @@ export class StormEngine {
             price: getGenCost(
               this.runCfg.polishCfg.modelName,
               polishedArticle.inputTokens,
-              polishedArticle.outputTokens
+              polishedArticle.outputTokens,
             ),
           },
         ],
