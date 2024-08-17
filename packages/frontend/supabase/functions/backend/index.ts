@@ -90,8 +90,8 @@ app.post("/gen/emit", async (c) => {
 
 app.post("/gen/poll", async (c) => {
   // Poll for status
-  const runId = c.req.queries("runId") || "";
-  const userId = c.req.queries("userId") || "";
+  const runId = c.req.query("runId") || "";
+  const userId = c.req.query("userId") || "";
 
   const supabase = createClient(
     Deno.env.get("X_SUPABASE_URL") ?? "",
@@ -154,6 +154,17 @@ app.post("/gen/poll", async (c) => {
         throw new Error("Failed to deduct token");
       }
 
+      const insertDocMeta = await supabase.from("doc_meta").insert({
+        title: res.output.data.title,
+        user_id: userId,
+        file_name: `${userId}/${runId}.md`,
+      });
+
+      if (insertDocMeta.error) {
+        console.log(insertDocMeta.error);
+        throw new Error("Failed to insert doc meta");
+      }
+
       return c.json({
         ...res,
         signedUrl,
@@ -172,6 +183,56 @@ app.post("/gen/poll", async (c) => {
       throw new Error("Failed to reset is generating");
     }
   }
+});
+
+app.get("/doc", async (c) => {
+  const fileName = c.req.query("fileName") || "";
+  const userId = c.req.query("userId") || "";
+  console.log(fileName, userId);
+
+  const supabase = createClient(
+    Deno.env.get("X_SUPABASE_URL") ?? "",
+    Deno.env.get("X_SUPABASE_ANON_KEY") ?? "",
+    {
+      global: {
+        headers: { Authorization: c.req.header("Authorization") || "" },
+      },
+    },
+  );
+
+  const docMeta = await supabase.from("doc_meta").select(
+    "file_name",
+  ).eq("user_id", userId).like("file_name", fileName).single();
+
+  if (docMeta.error) {
+    throw new Error(docMeta.error?.message ?? "");
+  }
+
+  if (!docMeta.data) {
+    throw new Error("Doc not found");
+  }
+
+  const S3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${
+      Deno.env.get("R2_ACCOUNT_ID") || ""
+    }.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: Deno.env.get("R2_ACCESS_KEY_ID") || "",
+      secretAccessKey: Deno.env.get("R2_SECRET_KEY") || "",
+    },
+  });
+
+  const signedUrl = await getSignedUrl(
+    S3,
+    new GetObjectCommand({
+      Bucket: Deno.env.get("R2_BUCKET_NAME") || "",
+      Key: `${fileName}`,
+    }),
+    { expiresIn: 3600 },
+  );
+
+  return c.json({ signedUrl });
 });
 
 Deno.serve(app.fetch);

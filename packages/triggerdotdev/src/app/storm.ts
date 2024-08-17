@@ -2,13 +2,14 @@ import { logger } from "@trigger.dev/sdk/v3";
 import { OutlineResponse, StormOutlineGen } from "./outline";
 import { PolishEngine } from "./polish";
 import { UploadEngine } from "./upload";
-import { WriteArticleEngine } from "./writeArticle";
+import { WriteArticleEngine, WriteArticleResponse } from "./writeArticle";
 import { TFGoogleSearchFusionData } from "@thinkforce/shared";
 import { getGenCost } from "./completion";
 import { GOOGLE_SEARCH_PRICE } from "./const";
 
 export interface StormResponse {
   data: {
+    title: string;
     fileName: string;
     article: string;
   };
@@ -99,7 +100,13 @@ export class StormEngine {
     logger.info("[Outline]", { _outline });
 
     // Step 2: Write Article
-    let article = [];
+    const title = rr[0];
+    let article: WriteArticleResponse[] = [{
+      content: title,
+      inputGptTokens: 0,
+      outputGptTokens: 0,
+      sources: [],
+    }];
     const writeArticleEngine = new WriteArticleEngine(
       this.runCfg.writeArticleCfg.modelName,
       this.runCfg.writeArticleCfg.temperature,
@@ -146,6 +153,7 @@ export class StormEngine {
 
     return {
       data: {
+        title: title,
         fileName: "",
         article: textArticle,
       },
