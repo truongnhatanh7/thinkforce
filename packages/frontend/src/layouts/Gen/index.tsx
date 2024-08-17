@@ -110,6 +110,7 @@ const Gen = () => {
           // Set the preview
           setIsLoading(false);
           setMdResult(res.output.data.article || "");
+          window.localStorage.setItem("lastArticle", res.output.data.article);
           window.localStorage.removeItem("lastRunId");
         } else {
           setIsLoading(false);
@@ -171,6 +172,14 @@ const Gen = () => {
   useEffect(() => {
     handleCheckTokens();
   }, [mdResult]);
+
+  useEffect(() => {
+    // Handle load last article
+    const lastArticle = window.localStorage.getItem("lastArticle");
+    if (lastArticle) {
+      setMdResult(lastArticle);
+    }
+  }, []);
 
   const checkLastRun = async () => {
     // get last run id from local storage
