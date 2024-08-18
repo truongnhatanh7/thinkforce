@@ -1,14 +1,12 @@
 import { useGetDocQuery } from "@/api/useDocQuery";
 import { Spinner } from "@/components/spinner";
 import { Card, CardContent } from "@/components/ui/card";
-import { handleGetDocInMD } from "@/repo/docMeta";
 import React from "react";
 import Markdown from "react-markdown";
 import {
   LoaderFunction,
   LoaderFunctionArgs,
-  useLoaderData,
-  useNavigation,
+  useLoaderData
 } from "react-router-dom";
 
 export const viewerDocLoader: LoaderFunction = async ({

@@ -1,5 +1,5 @@
 import { handleGetDocInMD, handleListDoc } from "@/repo/docMeta";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export const useListDocQuery = () => {
   return useQuery({

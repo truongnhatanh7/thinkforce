@@ -2,9 +2,8 @@ import { useListDocQuery } from "@/api/useDocQuery";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { refineMarkdownTitleToFlatString } from "@/lib/utils";
-import { DocMeta, handleListDoc } from "@/repo/docMeta";
 import { HistoryIcon, MenuIcon, WandSparklesIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const Sidebar = () => {
