@@ -1,7 +1,6 @@
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 import { envvars } from "@trigger.dev/sdk/v3";
-import { TRIGGER_PROJECT_NAME } from "../../trigger.config";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import {
   GEMINI_FLASH_INPUT_HIGH_PRICE,
   GEMINI_FLASH_INPUT_LOW_PRICE,

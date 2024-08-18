@@ -1,19 +1,18 @@
-import { TFGoogleSearchFusionData } from "@thinkforce/shared";
 import { getModel } from "./completion";
+import { SearchResultItem } from "./search";
 
 export interface WriteArticleResponse {
+  index: number;
   content: string;
   inputGptTokens: number;
   outputGptTokens: number;
-  sources: TFGoogleSearchFusionData[];
+  sources: SearchResultItem[];
 }
-
-export interface TruthySource {}
 
 export class WriteArticleEngine {
   inputGptTokens: number;
   outputGptTokens: number;
-  sources: TFGoogleSearchFusionData[];
+  sources: SearchResultItem[];
 
   constructor(private modelName: string, private temperature: number) {
     this.modelName = modelName;
@@ -24,10 +23,11 @@ export class WriteArticleEngine {
   }
 
   async writeSection(
+    index: number,
     outline: string,
     section: string,
     topic: string,
-    sources: TFGoogleSearchFusionData[]
+    sources: SearchResultItem[],
   ): Promise<WriteArticleResponse> {
     const model = await getModel(this.modelName, this.temperature);
 
@@ -42,7 +42,7 @@ export class WriteArticleEngine {
 
 		You MUST follow these rules STRICTLY:
 		1. Your response MUST be in markdown format. 
-    2. ONLY USE information provided by the context
+    2. ONLY USE information provided by the context, if the provided information is not enough, you say "There's not enough information to answer this question" for that part only.
     3. Your output MUST HAVE references based on the context provided
     4. If there's quantitative data provided by the context, you MUST include it in your response to justify your writing.
     5. You MUST follow this format for your writing:
@@ -59,14 +59,16 @@ export class WriteArticleEngine {
     Section that you HAVE TO write: ${section}
   
     Here are some context for the section:
-    ${sources
-      ?.map(
-        (context, index) =>
-          `${index + 1}. Title: ${context.title} | Reference: ${
-            context.link
-          } | Content: ${context.content}`
-      )
-      .join("\n")}
+    ${
+      sources
+        ?.map(
+          (context, index) =>
+            `${
+              index + 1
+            }. Title: ${context.title} | Reference: ${context.link} | Content: ${context.content}`,
+        )
+        .join("\n")
+    }
     `;
     const response = await model?.invoke([
       {
@@ -89,6 +91,7 @@ export class WriteArticleEngine {
       }
 
       return {
+        index: index,
         content: sec,
         inputGptTokens: this.inputGptTokens,
         outputGptTokens: this.outputGptTokens,
@@ -97,6 +100,7 @@ export class WriteArticleEngine {
     }
 
     return {
+      index: index,
       content: "",
       inputGptTokens: this.inputGptTokens,
       outputGptTokens: this.outputGptTokens,

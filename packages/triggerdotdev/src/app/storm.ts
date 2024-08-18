@@ -1,11 +1,12 @@
 import { logger } from "@trigger.dev/sdk/v3";
-import { OutlineResponse, StormOutlineGen } from "./outline";
-import { PolishEngine } from "./polish";
-import { UploadEngine } from "./upload";
-import { WriteArticleEngine, WriteArticleResponse } from "./writeArticle";
-import { TFGoogleSearchFusionData } from "@thinkforce/shared";
+import { batchWrite } from "../trigger/writeBatch";
 import { getGenCost } from "./completion";
 import { GOOGLE_SEARCH_PRICE } from "./const";
+import { OutlineResponse, StormOutlineGen } from "./outline";
+import { PolishEngine } from "./polish";
+import { SearchResultItem } from "./search";
+import { UploadEngine } from "./upload";
+import { WriteArticleEngine, WriteArticleResponse } from "./writeArticle";
 
 export interface StormResponse {
   data: {
@@ -28,7 +29,7 @@ export interface StormResponse {
 export class StormEngine {
   runCfg: RunCfg;
   userId: string;
-  sources: TFGoogleSearchFusionData[];
+  sources: SearchResultItem[];
 
   constructor(runCfg: RunCfg, userId: string) {
     this.runCfg = runCfg;
@@ -102,26 +103,36 @@ export class StormEngine {
     // Step 2: Write Article
     const title = rr[0];
     let article: WriteArticleResponse[] = [{
+      index: -1,
       content: title,
       inputGptTokens: 0,
       outputGptTokens: 0,
       sources: [],
     }];
-    const writeArticleEngine = new WriteArticleEngine(
-      this.runCfg.writeArticleCfg.modelName,
-      this.runCfg.writeArticleCfg.temperature,
-    );
 
     let writeInputTokens = 0;
     let writeOutputTokens = 0;
-    for (let sectionOutline of rr.slice(1)) {
-      let sec = await writeArticleEngine.writeSection(
-        _outline.outline,
-        sectionOutline,
-        topic,
-        this.sources,
-      );
-      logger.info("[Section]", { sec });
+
+    let rrForWrite = rr.slice(1);
+    let sections = await batchWrite.triggerAndWait({
+      sections: rrForWrite.map((section, index) => ({
+        modelName: this.runCfg.writeArticleCfg.modelName,
+        temperature: this.runCfg.writeArticleCfg.temperature,
+        index: index,
+        section: section,
+        outline: _outline.outline,
+        topic: topic,
+        sources: this.sources,
+      })),
+    });
+
+    if (!sections.ok) {
+      logger.error("[Batch Write]", { sections });
+      throw new Error("Batch write failed");
+    }
+    sections.output.sort((a, b) => a.index - b.index);
+
+    for (let sec of sections.output) {
       this.sources.push(...sec.sources);
       writeInputTokens += sec.inputGptTokens;
       writeOutputTokens += sec.outputGptTokens;
