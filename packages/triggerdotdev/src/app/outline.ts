@@ -1,7 +1,8 @@
 import { logger } from "@trigger.dev/sdk/v3";
+import { batchQa } from "../trigger/qaBatch.task";
 import { getModel } from "./completion";
-import { GoogleSearch } from "./google";
-import { TFGoogleSearchFusionData } from "@thinkforce/shared";
+import { ExaSearch } from "./exa";
+import { SearchResultItem, SearchResults } from "./search";
 
 interface PersonaPackage {
   persona: string;
@@ -10,10 +11,18 @@ interface PersonaPackage {
 
 export interface OutlineResponse {
   outline: string;
-  sources: TFGoogleSearchFusionData[];
+  sources: SearchResultItem[];
   inputTokens: number;
   outputTokens: number;
   searchCount: number;
+}
+
+export interface GenAnswerResponse {
+  answer: string;
+  persona: string;
+  question: string;
+  topic: string;
+  sources: SearchResultItem[];
 }
 
 export class StormOutlineGen {
@@ -24,7 +33,7 @@ export class StormOutlineGen {
   naiveOutline: string;
   personas: PersonaPackage[];
   relatedTopics: string[];
-  sources: TFGoogleSearchFusionData[];
+  sources: SearchResultItem[];
   searchCount: number;
 
   constructor(modelName: string, temperature: number) {
@@ -81,7 +90,7 @@ export class StormOutlineGen {
   async generateRelatedTopics(topic: string): Promise<string[]> {
     const model = await getModel(this.modelName, this.temperature);
     const SYSTEM_PROMPT = `
-    You are given a topic, you job is to generate 5 related topics based on the topic.
+    You are given a topic, you job is to generate 3 related topics based on the topic.
     For example, for the topic "Gout Treatment", you can generate personas like "Natural Gout Treatment", "New Gout Treatment", "Gout Surgery".
     Return the result as a string with each topics separated by comma. For example: "Natural Gout Treatment,New Gout Treatment,Gout Surgery".
     Don't add any irrelevant words. Just return the result only.
@@ -107,10 +116,42 @@ export class StormOutlineGen {
     return [];
   }
 
+  async preSearch(topic: string): Promise<SearchResults> {
+    const model = await getModel(this.modelName, this.temperature);
+    const SYSTEM_PROMPT = `
+    You are a researcher that is looking for information about a topic.
+    You are given a topic, you job is to reduce unnecessary word in the topic to make it a better search query.
+    For example, for the topic "What is the effect of colchicine to your body", you can reduce it to "effect of colchicine".
+    `;
+    const USER_PROMPT = `Here's the topic: ${topic}`;
+    const response = await model?.invoke([
+      {
+        type: "system",
+        content: SYSTEM_PROMPT,
+      },
+      {
+        type: "user",
+        content: USER_PROMPT,
+      },
+    ]);
+
+    if (!response) {
+      throw new Error("Failed to generate search query");
+    }
+    this.outputTokens += response.usage_metadata?.output_tokens || 0;
+    this.inputTokens += response.usage_metadata?.input_tokens || 0;
+    const refinedQuery = response.content.toString();
+    logger.info("Refined query", { refinedQuery });
+
+    const searchEngine = new ExaSearch();
+    const res = await searchEngine.search(refinedQuery, topic, 20);
+    return res;
+  }
+
   async generatePersonas(topic: string): Promise<string[]> {
     const model = await getModel(this.modelName, this.temperature);
     const SYSTEM_PROMPT = `
-    You are given a topic, you job is to generate 4 personas based on the topic.
+    You are given a topic, you job is to generate 3 personas based on the topic.
     For example, for the topic "Artificial Intelligence", you can generate personas like "AI Researcher", "AI Developer", "AI Ethicist".
     Return the result as a string with each persona separated by comma. For example: "AI Researcher,AI Developer,AI Ethicist".
     Don't add any irrelevant words. Just return the result only.
@@ -136,8 +177,8 @@ export class StormOutlineGen {
     return ["Expert", "Novice", "Hobbyist"];
   }
 
-  private sourceArToObj(): { [key: string]: TFGoogleSearchFusionData } {
-    const obj: { [key: string]: TFGoogleSearchFusionData } = {};
+  private sourceArToObj(): { [key: string]: SearchResultItem } {
+    const obj: { [key: string]: SearchResultItem } = {};
     for (let i = 0; i < this.sources.length; i++) {
       obj[`${this.sources[i].link}`] = this.sources[i];
     }
@@ -146,19 +187,44 @@ export class StormOutlineGen {
 
   async generateContext(topic: string): Promise<string> {
     // For each personas, gen 3 questions base on persona
+    const search = await this.preSearch(topic);
 
     for (const persona of this.personas) {
       logger.info("Generating questions for persona", { persona });
+
       const questions = await this.generateQuestions(persona.persona, topic);
       logger.info("Generated questions", { questions });
-      for (const question of questions) {
-        const answer = await this.generateAnswer(
-          persona.persona,
-          question,
-          topic
-        );
-        logger.info("Generated answer", { persona, question, answer });
-        persona.qaPairs.push({ question, answer });
+
+      const qaRes = await batchQa.triggerAndWait({
+        modelName: this.modelName,
+        temperature: this.temperature,
+        sources: search.results,
+        items: questions.map((question) => {
+          return {
+            persona: persona.persona,
+            question,
+            topic,
+          };
+        }),
+      });
+
+      if (!qaRes.ok) {
+        logger.error("Failed to generate answers", { qaRes });
+        continue;
+      }
+
+      for (const qa of qaRes.output) {
+        persona.qaPairs.push({ question: qa.question, answer: qa.answer });
+
+        // Remove duplicate sources
+        for (const source of qa.sources) {
+          const found = this.sources.find(
+            (s) => s.link === source.link,
+          );
+          if (!found) {
+            this.sources.push(source);
+          }
+        }
       }
     }
 
@@ -168,12 +234,12 @@ export class StormOutlineGen {
 
   private async generateQuestions(
     persona: string,
-    topic: string
+    topic: string,
   ): Promise<string[]> {
     const model = await getModel(this.modelName, this.temperature);
     const SYSTEM_PROMPT = `
     You are a interviewer that is talking to a ${persona} about ${topic}
-    Your job is to generate 3 questions that are relevant to the topic.
+    Your job is to generate ONLY 3 questions that are relevant to the topic.
     Don't add any irrelevant words. Just return the result only.
     Return the result as a string with each question separated by comma. For example: What is the topic?,Why is the topic important?,How does the topic work?
     `;
@@ -204,19 +270,22 @@ export class StormOutlineGen {
     ];
   }
 
-  private async generateAnswer(
+  async generateAnswer(
     persona: string,
     question: string,
-    topic: string
-  ): Promise<string> {
+    topic: string,
+    sources: SearchResultItem[],
+  ): Promise<GenAnswerResponse> {
     logger.info("Generating answer", { persona, question, topic });
     // Step 1: Search for answer
-    const searchEngine = new GoogleSearch(this.sourceArToObj());
-    const searchResults = await searchEngine.search(question, topic);
-    this.sources.push(...searchResults.data);
-    this.inputTokens += searchResults.inputTokens;
-    this.outputTokens += searchResults.outputTokens;
-    logger.info("Search results", { searchResults });
+    // const searchEngine = new GoogleSearch(this.sourceArToObj());
+    // const searchEngine = new ExaSearch();
+    // const searchResults = await searchEngine.search(question, topic);
+    // this.sources.push(...searchResults.results);
+    this.sources = sources;
+    // this.inputTokens += searchResults.inputTokens;
+    // this.outputTokens += searchResults.outputTokens;
+    // logger.info("Search results", { searchResults });
 
     // Step 2: Generate answer
     const model = await getModel(this.modelName, this.temperature);
@@ -230,9 +299,11 @@ export class StormOutlineGen {
 
     Here's the question:${question}
 
-    Here's the context:${searchResults.data
-      .map((result) => result.content)
-      .join("\n")}
+    Here's the context:${
+      this.sources
+        .map((result) => result.content)
+        .join("\n")
+    }
     `;
     const response = await model?.invoke([
       {
@@ -255,10 +326,22 @@ export class StormOutlineGen {
         answer: response.content.toString(),
       });
       this.searchCount += 1;
-      return response.content.toString();
+      return {
+        answer: response.content.toString(),
+        persona: persona,
+        question: question,
+        topic: topic,
+        sources: this.sources,
+      };
     }
 
-    return "";
+    return {
+      answer: "",
+      persona: persona,
+      question: question,
+      topic: topic,
+      sources: this.sources,
+    };
   }
 
   private async refineOutline(context: string, topic: string): Promise<string> {

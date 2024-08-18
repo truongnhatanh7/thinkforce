@@ -16,6 +16,7 @@
     "@langchain/google-genai": "^0.0.25",
     "@langchain/openai": "^0.2.6",
     "@trigger.dev/sdk": "3.0.0-beta.53",
+    "exa-js": "^1.0.14",
     "jsdom": "^24.1.1",
     "langchain": "^0.2.13"
   },

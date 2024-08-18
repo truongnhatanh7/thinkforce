@@ -1,26 +1,23 @@
+import { GoogleResponse, TFGoogleSearchFusionData } from "@thinkforce/shared";
 import { getModel } from "./completion";
-import { TRIGGER_PROJECT_NAME } from "../../trigger.config";
 import {
   EXCLUDE_EXTENSIONS,
   EXCLUDE_PAGES,
   REDUCE_TOKEN_KWS,
 } from "./google.helper";
-import {
-  GoogleResponse,
-  TFGoogleSearchFusion,
-  TFGoogleSearchFusionData,
-} from "@thinkforce/shared";
 
 import { envvars, logger } from "@trigger.dev/sdk/v3";
 import jsdom from "jsdom";
+import { SearchEngine, SearchResults } from "./search";
 
 const GOOGLE_SEARCH_URL = "https://customsearch.googleapis.com/customsearch/v1";
-export class GoogleSearch {
+export class GoogleSearch extends SearchEngine {
   inputTokens: number;
   outputTokens: number;
   sourceMap: { [key: string]: TFGoogleSearchFusionData };
 
   constructor(sourceMap: { [key: string]: TFGoogleSearchFusionData }) {
+    super();
     this.inputTokens = 0;
     this.outputTokens = 0;
     this.sourceMap = sourceMap;
@@ -149,10 +146,10 @@ export class GoogleSearch {
 
   async search(
     query: string,
-    originalTopic: string,
-    limit = 2,
-  ): Promise<TFGoogleSearchFusion> {
-    query = await this.rewriteSearchQuery(query, originalTopic);
+    topic: string,
+    limit = 5,
+  ): Promise<SearchResults> {
+    query = await this.rewriteSearchQuery(query, topic);
 
     const googleApiKey = (
       await envvars.retrieve("GOOGLE_API_KEY")
@@ -182,11 +179,13 @@ export class GoogleSearch {
       res,
     });
 
+    // inputTokens: this.inputTokens,
+    //     outputTokens: this.outputTokens,
+
     if (!res?.items || res?.items?.length === 0) {
       return {
-        data: [],
-        inputTokens: this.inputTokens,
-        outputTokens: this.outputTokens,
+        costInUsd: 0, // TODO: Will be updated,,
+        results: [],
       };
     }
 
@@ -251,9 +250,8 @@ export class GoogleSearch {
     });
 
     return {
-      data: results || [],
-      inputTokens: this.inputTokens,
-      outputTokens: this.outputTokens,
+      costInUsd: 0.05, // WIll be updated
+      results,
     };
   }
 }
