@@ -51,7 +51,7 @@ export const handleGetDocInMD = async (fileName: string) => {
   const mdContentReq = await fetch(res.signedUrl, {
     method: "GET",
     headers: {
-      "Access-Control-Allow-Origin": "http://localhost:5173",
+      "Access-Control-Allow-Origin": import.meta.env.VITE_URL || "",
       "Access-Control-Allow-Methods": "GET",
     },
   });
