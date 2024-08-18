@@ -202,7 +202,7 @@ app.get("/doc", async (c) => {
 
   const docMeta = await supabase.from("doc_meta").select(
     "file_name",
-  ).eq("user_id", userId).like("file_name", fileName).single();
+  ).eq("user_id", userId).eq("file_name", `${fileName}`).single();
 
   if (docMeta.error) {
     throw new Error(docMeta.error?.message ?? "");

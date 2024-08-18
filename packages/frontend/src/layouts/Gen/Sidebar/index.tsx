@@ -1,23 +1,20 @@
+import { useListDocQuery } from "@/api/useDocQuery";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { refineMarkdownTitleToFlatString } from "@/lib/utils";
-import { DocMeta, handleListDoc } from "@/repo/docMeta";
 import { HistoryIcon, MenuIcon, WandSparklesIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [width, setWidth] = useState("w-12");
-  const [history, setHistory] = useState<DocMeta[]>([]);
 
-  useEffect(() => {
-    (async () => {
-      const docMetas = await handleListDoc();
-      console.log(docMetas);
-      setHistory(docMetas);
-    })();
-  }, []);
+  const docs = useListDocQuery();
+
+  if (docs.error || !docs.data) {
+    return <div>Unexpected error</div>;
+  }
 
   return (
     <div
@@ -69,14 +66,14 @@ const Sidebar = () => {
             History <HistoryIcon className="inline-block h-4 w-4" />
           </h1>
           <Separator />
-          {history.map((history, i) => (
-            <Link to={`/viewer/${encodeURIComponent(history.file_name)}`}>
+          {docs.data!.map((docMeta, i) => (
+            <Link to={`/viewer/${encodeURIComponent(docMeta.file_name)}`}>
               <Button
-                key={i + history.file_name}
+                key={i + docMeta.file_name}
                 variant="ghost"
                 className="rounded-none flex justify-start text-ellipsis w-full overflow-clip"
               >
-                {refineMarkdownTitleToFlatString(history.title)}
+                {refineMarkdownTitleToFlatString(docMeta.title)}
               </Button>
             </Link>
           ))}
