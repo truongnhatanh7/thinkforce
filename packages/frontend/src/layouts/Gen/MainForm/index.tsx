@@ -25,7 +25,8 @@ import Markdown from "react-markdown";
 import { z } from "zod";
 import { loadingPlaceholder } from "../loadingPlaceholder";
 import { useToast } from "@/components/ui/use-toast";
-import { handleCheckTokens } from "@/repo/genUsage";
+import { useTokensQuery } from "@/api/useGenUsageQuery";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface MainFormProps {}
 
@@ -43,7 +44,8 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
     },
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [tokens, setTokens] = useState(0);
+  const queryClient = useQueryClient();
+  const tokens = useTokensQuery();
 
   const [runId, setRunId] = useState("");
   const [mdResult, setMdResult] = useState("");
@@ -156,11 +158,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
   }, [isLoading]);
 
   useEffect(() => {
-    const fn = async () => {
-      const tokens = await handleCheckTokens();
-      setTokens(tokens);
-    };
-    fn();
+    queryClient.invalidateQueries({ queryKey: ["tokens"] });
   }, [mdResult]);
 
   useEffect(() => {
@@ -210,7 +208,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
           <br />
         </CardDescription>
         <p className="py-2 px-3 rounded-md font-medium text-sm bg-slate-500 w-fit text-white">
-          Your token balance: {tokens}
+          Your token balance: {tokens.data || 0}
         </p>
       </CardHeader>
       <CardContent className="">
