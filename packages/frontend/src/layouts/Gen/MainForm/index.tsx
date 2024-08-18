@@ -191,7 +191,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
   };
 
   return (
-    <Card className="rounded-none w-screen">
+    <Card className="rounded-none w-full">
       <CardHeader>
         <CardTitle>ThinkForce (Private Early Access v0.0.1)</CardTitle>
         <CardDescription>

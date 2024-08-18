@@ -1,9 +1,10 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./App.css";
+import { Toaster } from "./components/ui/toaster.tsx";
+import EarlyAccessAuth from "./layouts/EarlyAccessAuth/index.tsx";
 import EarlyAccessWrapper from "./layouts/EarlyAccessWrapper";
 import Gen from "./layouts/Gen";
-import EarlyAccessAuth from "./layouts/EarlyAccessAuth/index.tsx";
-import { Toaster } from "./components/ui/toaster.tsx";
 import MainForm from "./layouts/Gen/MainForm/index.tsx";
 import Viewer, { viewerDocLoader } from "./layouts/Gen/Viewer/index.tsx";
 
@@ -35,11 +36,15 @@ const router = createBrowserRouter([
   },
 ]);
 
+const queryClient = new QueryClient();
+
 function App() {
   return (
     <>
-      <RouterProvider router={router} />
-      <Toaster />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <Toaster />
+      </QueryClientProvider>
     </>
   );
 }

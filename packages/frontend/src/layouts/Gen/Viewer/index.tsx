@@ -1,3 +1,5 @@
+import { useGetDocQuery } from "@/api/useDocQuery";
+import { Spinner } from "@/components/spinner";
 import { Card, CardContent } from "@/components/ui/card";
 import { handleGetDocInMD } from "@/repo/docMeta";
 import React from "react";
@@ -6,6 +8,7 @@ import {
   LoaderFunction,
   LoaderFunctionArgs,
   useLoaderData,
+  useNavigation,
 } from "react-router-dom";
 
 export const viewerDocLoader: LoaderFunction = async ({
@@ -15,23 +18,30 @@ export const viewerDocLoader: LoaderFunction = async ({
   if (!fileName) {
     throw new Error("File name is required");
   }
-  // Find run key word in fileName
   let refineFileName = decodeURIComponent(fileName);
-
-  const res = await handleGetDocInMD(refineFileName);
-  return res;
+  return refineFileName;
 };
 
 interface ViewerProps {}
 
 const Viewer: React.FC<ViewerProps> = () => {
-  const doc = useLoaderData();
+  const fileName = useLoaderData();
+
+  const doc = useGetDocQuery((fileName as string) || "");
 
   return (
     <div className="w-full h-full">
-      <Card className="rounded-none">
+      <Card className="rounded-none w-full h-full">
         <CardContent>
-          <Markdown className="markdown">{doc as string}</Markdown>
+          {doc.isLoading ? (
+            <div className="w-full h-screen grid place-items-center">
+              <div className=" scale-[250%]">
+                <Spinner />
+              </div>
+            </div>
+          ) : (
+            <Markdown className="markdown">{doc.data as string}</Markdown>
+          )}
         </CardContent>
       </Card>
     </div>
