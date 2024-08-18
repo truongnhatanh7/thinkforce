@@ -1,5 +1,5 @@
 import { logger } from "@trigger.dev/sdk/v3";
-import { batchWrite } from "../trigger/writeBatch.task";
+import { batchWrite } from "../trigger/writeBatch";
 import { getGenCost } from "./completion";
 import { GOOGLE_SEARCH_PRICE } from "./const";
 import { OutlineResponse, StormOutlineGen } from "./outline";
@@ -109,10 +109,6 @@ export class StormEngine {
       outputGptTokens: 0,
       sources: [],
     }];
-    const writeArticleEngine = new WriteArticleEngine(
-      this.runCfg.writeArticleCfg.modelName,
-      this.runCfg.writeArticleCfg.temperature,
-    );
 
     let writeInputTokens = 0;
     let writeOutputTokens = 0;

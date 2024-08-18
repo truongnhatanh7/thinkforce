@@ -1,8 +1,9 @@
 import { logger } from "@trigger.dev/sdk/v3";
-import { batchQa } from "../trigger/qaBatch.task";
+import { batchQa } from "../trigger/qaBatch";
 import { getModel } from "./completion";
 import { ExaSearch } from "./exa";
 import { SearchResultItem, SearchResults } from "./search";
+import { batchPersonaQA } from "../trigger/batchPersona";
 
 interface PersonaPackage {
   persona: string;
@@ -188,51 +189,43 @@ export class StormOutlineGen {
   async generateContext(topic: string): Promise<string> {
     // For each personas, gen 3 questions base on persona
     const search = await this.preSearch(topic);
+    this.sources = search.results;
 
-    for (const persona of this.personas) {
-      logger.info("Generating questions for persona", { persona });
+    const batchPersonaQARun = await batchPersonaQA.triggerAndWait({
+      modelName: this.modelName,
+      temperature: this.temperature,
+      personas: this.personas.map((persona) => persona.persona),
+      topic,
+      sources: search.results,
+    });
 
-      const questions = await this.generateQuestions(persona.persona, topic);
-      logger.info("Generated questions", { questions });
-
-      const qaRes = await batchQa.triggerAndWait({
-        modelName: this.modelName,
-        temperature: this.temperature,
-        sources: search.results,
-        items: questions.map((question) => {
-          return {
-            persona: persona.persona,
-            question,
-            topic,
-          };
-        }),
-      });
-
-      if (!qaRes.ok) {
-        logger.error("Failed to generate answers", { qaRes });
-        continue;
-      }
-
-      for (const qa of qaRes.output) {
-        persona.qaPairs.push({ question: qa.question, answer: qa.answer });
-
-        // Remove duplicate sources
-        for (const source of qa.sources) {
-          const found = this.sources.find(
-            (s) => s.link === source.link,
-          );
-          if (!found) {
-            this.sources.push(source);
-          }
-        }
-      }
+    if (!batchPersonaQARun.ok) {
+      logger.error("Failed to generate questions", { batchPersonaQARun });
+      return "";
     }
+
+    // Map batchPersonaQARun to personas
+    this.personas = batchPersonaQARun.output.map((persona) => {
+      if (persona.length === 0) {
+        return { persona: "", qaPairs: [] };
+      }
+      const personaType = persona[0].persona;
+
+      const personaQAPairs = persona.map(
+        (qa: { question: any; answer: any }) => {
+          return { question: qa.question, answer: qa.answer };
+        },
+      );
+      return { persona: personaType, qaPairs: [...personaQAPairs] };
+    });
+
+    logger.info("Final Persona Package", { personas: this.personas });
 
     // Stringify the context
     return JSON.stringify(this.personas);
   }
 
-  private async generateQuestions(
+  async generateQuestions(
     persona: string,
     topic: string,
   ): Promise<string[]> {

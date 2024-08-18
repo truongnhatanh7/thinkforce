@@ -1,6 +1,6 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { SearchResultItem } from "../app/search";
-import { qa } from "./qa.task";
+import { qa } from "./qa";
 
 export const batchQa = task({
   id: "qaBatch",
@@ -43,7 +43,6 @@ export const batchQa = task({
       }),
     ));
 
-    console.log(results.runs);
     // Check if every runs are ok
     let isOk = false;
     if (results.runs.every((run) => run.ok)) {

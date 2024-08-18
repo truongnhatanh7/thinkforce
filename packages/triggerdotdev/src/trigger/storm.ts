@@ -50,7 +50,6 @@ export const stormieEngine = task({
     const res = await stormie.run(payload.title, payload.outline);
 
     // Cost calculation
-
     const triggerCost = usage.getCurrent();
     const triggerCostInUSD = triggerCost.totalCostInCents / 100;
     const totalCost = res.metadata.steps.reduce((acc, step) => {

@@ -13,7 +13,7 @@ export const qa = task({
   },
   queue: {
     name: "qa",
-    concurrencyLimit: 5,
+    concurrencyLimit: 10,
   },
   machine: {
     preset: "small-1x",

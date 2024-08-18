@@ -1,6 +1,6 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { SearchResultItem } from "../app/search";
-import { write } from "./write.task";
+import { write } from "./write";
 
 export const batchWrite = task({
   id: "batchWrite",
@@ -36,8 +36,6 @@ export const batchWrite = task({
         payload: section,
       })),
     );
-
-    console.log(results.runs);
 
     let isOk = false;
     if (results.runs.every((run) => run.ok)) {

@@ -13,7 +13,7 @@ export const write = task({
   },
   queue: {
     name: "write",
-    concurrencyLimit: 8,
+    concurrencyLimit: 10,
   },
   machine: {
     preset: "small-1x",
