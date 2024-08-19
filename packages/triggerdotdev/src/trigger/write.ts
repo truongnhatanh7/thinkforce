@@ -29,6 +29,16 @@ export const write = task({
       sources: SearchResultItem[];
     },
   ) => {
+    const lines = payload.section.split("\n");
+    if (lines.length === 1) {
+      return {
+        index: payload.index,
+        content: payload.section,
+        inputTokens: 0,
+        outputTokens: 0,
+      };
+    }
+
     const writeEngine = new WriteArticleEngine(
       payload.modelName,
       payload.temperature,
