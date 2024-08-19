@@ -79,6 +79,11 @@ export class StormEngine {
         rr[rr.length - 1] += "\n" + line;
       }
     }
+
+    logger.info("[Transformed Outline]", {
+      before: outline,
+      after: rr,
+    });
     return rr;
   }
 
@@ -133,7 +138,6 @@ export class StormEngine {
     sections.output.sort((a, b) => a.index - b.index);
 
     for (let sec of sections.output) {
-      this.sources.push(...sec.sources);
       writeInputTokens += sec.inputGptTokens;
       writeOutputTokens += sec.outputGptTokens;
       article.push(sec);
