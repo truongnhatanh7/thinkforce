@@ -269,18 +269,9 @@ export class StormOutlineGen {
     topic: string,
     sources: SearchResultItem[],
   ): Promise<GenAnswerResponse> {
-    logger.info("Generating answer", { persona, question, topic });
-    // Step 1: Search for answer
-    // const searchEngine = new GoogleSearch(this.sourceArToObj());
-    // const searchEngine = new ExaSearch();
-    // const searchResults = await searchEngine.search(question, topic);
-    // this.sources.push(...searchResults.results);
+    // logger.info("Generating answer", { persona, question, topic });
     this.sources = sources;
-    // this.inputTokens += searchResults.inputTokens;
-    // this.outputTokens += searchResults.outputTokens;
-    // logger.info("Search results", { searchResults });
 
-    // Step 2: Generate answer
     const model = await getModel(this.modelName, this.temperature);
     const SYSTEM_PROMPT = `
     You are a ${persona} and you are asked a question about the topic.
@@ -312,12 +303,12 @@ export class StormOutlineGen {
     if (response) {
       this.inputTokens += response.usage_metadata?.input_tokens || 0;
       this.outputTokens += response.usage_metadata?.output_tokens || 0;
-      logger.info("Generated answer", {
-        persona,
-        question,
-        topic,
-        answer: response.content.toString(),
-      });
+      // logger.info("Generated answer", {
+      //   persona,
+      //   question,
+      //   topic,
+      //   answer: response.content.toString(),
+      // });
       this.searchCount += 1;
       return {
         answer: response.content.toString(),

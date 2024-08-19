@@ -28,10 +28,6 @@ export const batchPersonaQA = task({
       sources: SearchResultItem[];
     },
   ) => {
-    const outlineEngine = new StormOutlineGen(
-      payload.modelName,
-      payload.temperature,
-    );
 
     const batchPersonaQARun = await personaQA.batchTriggerAndWait(
       payload.personas.map((persona) => ({
