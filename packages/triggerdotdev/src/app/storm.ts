@@ -146,11 +146,15 @@ export class StormEngine {
       this.runCfg.polishCfg.modelName,
       this.runCfg.polishCfg.temperature,
     );
-    let textArticle = article.map((a) => a.content).join("\n\n");
+    // let textArticle = article.map((a) => a.content).join("\n\n");
 
-    const polishedArticle = await polishEngine.polish(textArticle);
-    textArticle = polishedArticle.content;
-    textArticle = this.performReferenceTemplating(textArticle);
+    const polishedArticle = await polishEngine.polishV2(article);
+    let textArticle = polishedArticle?.sections.map((a) => a.content).join(
+      "\n\n",
+    );
+
+    // textArticle = polishedArticle.content;
+    textArticle = this.performReferenceTemplating(textArticle || "");
 
     logger.info("[Polished Article]", { textArticle });
 
@@ -197,13 +201,13 @@ export class StormEngine {
           },
           {
             name: "Polish",
-            inputTokens: polishedArticle.inputTokens,
-            outputTokens: polishedArticle.outputTokens,
+            inputTokens: polishedArticle?.inputTokens,
+            outputTokens: polishedArticle?.outputTokens,
             modelName: this.runCfg.polishCfg.modelName,
             price: getGenCost(
               this.runCfg.polishCfg.modelName,
-              polishedArticle.inputTokens,
-              polishedArticle.outputTokens,
+              polishedArticle?.inputTokens || 0,
+              polishedArticle?.outputTokens || 0,
             ),
           },
         ],
