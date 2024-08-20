@@ -47,15 +47,10 @@ export class StormEngine {
       );
     }
 
-    // Replace [number] to [[number]](link)
-    for (let i = 0; i < this.sources.length; i++) {
-      const source = this.sources[i];
-      article = article.replaceAll(
-        `[${i + 1}]`,
-        `[[${i + 1}]](${source.link})`,
-      );
-    }
+    return article;
+  }
 
+  private addEndReferences(article: string) {
     const refSection = `\n# References\n${
       this.sources
         .map((source, i) => {
@@ -152,10 +147,13 @@ export class StormEngine {
     );
     let textArticle = article.map((a) => a.content).join("\n\n");
 
+    // Remove duplicate content
     const polishedArticle = await polishEngine.polish(textArticle);
     textArticle = polishedArticle.content;
-    textArticle = this.performReferenceTemplating(textArticle);
 
+    // Rule based post processing
+    textArticle = this.performReferenceTemplating(textArticle);
+    textArticle = this.addEndReferences(textArticle);
     logger.info("[Polished Article]", { textArticle });
 
     // Upload to R2

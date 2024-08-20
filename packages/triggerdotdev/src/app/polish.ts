@@ -29,10 +29,9 @@ export class PolishEngine {
     The article is in markdown format.
     You MUST perform the following tasks:
     - You MUST delete repetion part and keep other's non-repeated part in the article.
-    - You will keep the inline citations in this format (for example, "The capital of the United States is Washington, D.C.[1][3][7].").
+    - You MUST KEEP the inline citations in this format (for example, "The capital of the United States is Washington, D.C.[http://example.com][http://example2.com][http://example3.com].").
     - You will keep article structure (indicated by "#", "##", etc.) appropriately. 
     - You just return the polished article, don't add any extra information.
-    Do your job for the following article.
     `;
     const USER_PROMPT = `
     Here's the article: 

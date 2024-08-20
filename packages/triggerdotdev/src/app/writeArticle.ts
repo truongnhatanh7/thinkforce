@@ -12,28 +12,22 @@ export interface WriteArticleResponse {
 export class WriteArticleEngine {
   inputGptTokens: number;
   outputGptTokens: number;
-  sources: SearchResultItem[];
 
   constructor(private modelName: string, private temperature: number) {
     this.modelName = modelName;
     this.temperature = temperature;
     this.inputGptTokens = 0;
     this.outputGptTokens = 0;
-    this.sources = [];
   }
 
   async writeSection(
     index: number,
     outline: string,
     section: string,
-    topic: string,
+    _topic: string,
     sources: SearchResultItem[],
   ): Promise<WriteArticleResponse> {
     const model = await getModel(this.modelName, this.temperature);
-
-    // // Using perplexity
-    // const { data } = await this.search(section, topic);
-    // this.sources = data;
 
     const SYSTEM_PROMPT = `
     You are a educator writer.
@@ -86,8 +80,8 @@ export class WriteArticleEngine {
       this.outputGptTokens += response.usage_metadata?.output_tokens || 0;
 
       let sec = response.content.toString();
-      for (let i = 0; i < this.sources.length; i++) {
-        sec = sec.replaceAll(`[${i + 1}]`, `[${this.sources[i].link}]`);
+      for (let i = 0; i < sources.length; i++) {
+        sec = sec.replaceAll(`[${i + 1}]`, `[${sources[i].link}]`);
       }
 
       return {
@@ -95,7 +89,7 @@ export class WriteArticleEngine {
         content: sec,
         inputGptTokens: this.inputGptTokens,
         outputGptTokens: this.outputGptTokens,
-        sources: this.sources,
+        sources: sources,
       };
     }
 
@@ -104,7 +98,7 @@ export class WriteArticleEngine {
       content: "",
       inputGptTokens: this.inputGptTokens,
       outputGptTokens: this.outputGptTokens,
-      sources: this.sources,
+      sources: sources,
     };
   }
 }
