@@ -22,7 +22,7 @@ app.post("/gen/emit", async (c) => {
 
   const supabase = createClient(
     Deno.env.get("X_SUPABASE_URL") ?? "",
-    Deno.env.get("X_SUPABASE_ANON_KEY") ?? "",
+    Deno.env.get("X_SUPABASE_SERVICE_KEY") ?? "",
     {
       global: {
         headers: { Authorization: c.req.header("Authorization") || "" },
@@ -82,6 +82,36 @@ app.post("/gen/emit", async (c) => {
     );
 
     const res = await req.json();
+
+    const docMetaReq = await supabase.from("doc_meta").insert({
+      title,
+      file_name: `${userId}/${res.id}.md`,
+      user_id: userId,
+      run_id: res.id,
+      status: "started",
+    });
+
+    if (docMetaReq.error) {
+      throw new Error(docMetaReq.error?.message ?? "");
+    }
+
+    const tokens = await supabase.from("gen_usage").select(
+      "tokens",
+    ).eq("user_id", userId).single();
+
+    if (tokens.error) {
+      throw new Error(tokens.error?.message ?? "");
+    }
+
+    const deductToken = await supabase.from("gen_usage").update({
+      tokens: (tokens!.data!.tokens as unknown as number) - 10,
+    }).eq("user_id", userId);
+
+    if (deductToken.error) {
+      console.log(deductToken.error);
+      throw new Error("Failed to deduct token");
+    }
+
     return c.json(res);
   } catch (e) {
     console.log(e);
@@ -93,15 +123,16 @@ app.post("/gen/poll", async (c) => {
   const runId = c.req.query("runId") || "";
   const userId = c.req.query("userId") || "";
 
-  const supabase = createClient(
-    Deno.env.get("X_SUPABASE_URL") ?? "",
-    Deno.env.get("X_SUPABASE_ANON_KEY") ?? "",
-    {
-      global: {
-        headers: { Authorization: c.req.header("Authorization") || "" },
-      },
-    },
-  );
+  // const supabase = createClient(
+  //   Deno.env.get("X_SUPABASE_URL") ?? "",
+  //   Deno.env.get("X_SUPABASE_ANON_KEY") ?? "",
+  //   {
+  //     global: {
+  //       headers: { Authorization: c.req.header("Authorization") || "" },
+  //     },
+  //   },
+  // );
+  console.log(runId, userId);
 
   try {
     const req = await fetch(
@@ -137,34 +168,6 @@ app.post("/gen/poll", async (c) => {
         { expiresIn: 3600 },
       );
 
-      const tokens = await supabase.from("gen_usage").select(
-        "tokens",
-      ).eq("user_id", userId).single();
-
-      if (tokens.error) {
-        throw new Error(tokens.error?.message ?? "");
-      }
-
-      const deductToken = await supabase.from("gen_usage").update({
-        tokens: (tokens!.data!.tokens as unknown as number) - 10,
-      }).eq("user_id", userId);
-
-      if (deductToken.error) {
-        console.log(deductToken.error);
-        throw new Error("Failed to deduct token");
-      }
-
-      const insertDocMeta = await supabase.from("doc_meta").insert({
-        title: res.output.data.title,
-        user_id: userId,
-        file_name: `${userId}/${runId}.md`,
-      });
-
-      if (insertDocMeta.error) {
-        console.log(insertDocMeta.error);
-        throw new Error("Failed to insert doc meta");
-      }
-
       return c.json({
         ...res,
         signedUrl,
@@ -173,15 +176,7 @@ app.post("/gen/poll", async (c) => {
     return c.json(res);
   } catch (e) {
     console.log(e);
-
-    const resetIsGenerating = await supabase.from("gen_usage").update({
-      is_generating: false,
-    }).eq("user_id", userId);
-
-    if (resetIsGenerating.error) {
-      console.log(resetIsGenerating.error);
-      throw new Error("Failed to reset is generating");
-    }
+    return c.json({ e });
   }
 });
 

@@ -67,9 +67,11 @@ const Sidebar = () => {
           </h1>
           <Separator />
           {docs.data!.map((docMeta, i) => (
-            <Link to={`/viewer/${encodeURIComponent(docMeta.file_name)}`}>
+            <Link
+              key={i + docMeta.file_name}
+              to={`/viewer/${encodeURIComponent(docMeta.file_name)}`}
+            >
               <Button
-                key={i + docMeta.file_name}
                 variant="ghost"
                 className="rounded-none flex justify-start text-ellipsis w-full overflow-clip"
               >

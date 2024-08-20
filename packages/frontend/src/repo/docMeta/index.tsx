@@ -59,3 +59,23 @@ export const handleGetDocInMD = async (fileName: string) => {
 
   return mdContent;
 };
+
+export const handleGetLatestDoc = async () => {
+  const session = await supabase.auth.getSession();
+  const userId = session.data.session?.user.id || "";
+  const doc = await supabase
+    .from("doc_meta")
+    .select("*")
+    .order("created_at", {
+      ascending: false,
+    })
+    .eq("user_id", userId)
+    .limit(1)
+    .single();
+
+  if (doc.error) {
+    throw new Error(doc.error.message);
+  }
+
+  return doc.data;
+};

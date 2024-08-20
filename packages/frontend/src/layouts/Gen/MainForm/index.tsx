@@ -1,4 +1,4 @@
-import React from "react";
+import { useTokensQuery } from "@/api/useGenUsageQuery";
 import { Spinner } from "@/components/spinner";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,16 +17,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Tables } from "@/repo/database.types";
+import { handleGetLatestDoc } from "@/repo/docMeta";
 import { supabase } from "@/supabase";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import Markdown from "react-markdown";
 import { z } from "zod";
-import { loadingPlaceholder } from "../loadingPlaceholder";
-import { useToast } from "@/components/ui/use-toast";
-import { useTokensQuery } from "@/api/useGenUsageQuery";
-import { useQueryClient } from "@tanstack/react-query";
+import Job from "./Job";
 
 interface MainFormProps {}
 
@@ -43,20 +41,19 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
       topic: "",
     },
   });
+  const [doc, setDoc] = useState<Tables<"doc_meta">>();
+  const [needRefetch, setNeedRefetch] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const queryClient = useQueryClient();
   const tokens = useTokensQuery();
-
-  const [runId, setRunId] = useState("");
-  const [mdResult, setMdResult] = useState("");
-  const [loadingPlaceholderIdx, setLoadingPlaceholderIdx] = useState(0);
   const intervalRef = useRef<number>();
-  const { toast } = useToast();
+
+  useEffect(() => {}, []);
   const onSubmit = (values: z.infer<typeof GenSchema>) => {
     handleSubmitGenRequest(values.topic);
   };
 
   const handleSubmitGenRequest = async (topic: string) => {
+    setNeedRefetch(!needRefetch);
     setIsLoading(true);
     try {
       // Call edge func
@@ -68,7 +65,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
       }
 
       const baseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-      const req = await fetch(`${baseUrl}/functions/v1/backend/gen/emit`, {
+      await fetch(`${baseUrl}/functions/v1/backend/gen/emit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -81,115 +78,40 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
         }),
       });
 
-      const res = await req.json();
-      setRunId(res.id);
-      window.localStorage.setItem("lastRunId", res.id);
+      setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
     }
   };
 
-  const handleCheckRunId = async (runId: string) => {
-    try {
-      const session = await supabase.auth.getSession();
-      const accessToken = session.data.session?.access_token;
-      const userId = session.data.session?.user.id || "";
-      const baseUrl = new URL(import.meta.env.VITE_SUPABASE_URL || "");
-      baseUrl.pathname = "/functions/v1/backend/gen/poll";
-      baseUrl.searchParams.set("runId", runId);
-      baseUrl.searchParams.set("userId", userId);
+  const handleGetDoc = async (): Promise<Tables<"doc_meta"> | undefined> => {
+    const docRes = await handleGetLatestDoc();
+    if (docRes) {
+      setDoc(docRes);
+      return docRes;
+    }
 
-      const req = await fetch(baseUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+    return undefined;
+  };
 
-      const res = await req.json();
-
-      if (res.status !== "EXECUTING") {
+  useEffect(() => {
+    // handle ongoing job
+    setIsLoading(true);
+    intervalRef.current = window.setInterval(async () => {
+      const res = await handleGetDoc();
+      if (res?.status === "completed") {
         clearInterval(intervalRef.current);
-
-        if (res.status === "COMPLETED") {
-          // Set the preview
-          setIsLoading(false);
-          setMdResult(res.output.data.article || "");
-          window.localStorage.setItem("lastArticle", res.output.data.article);
-          window.localStorage.removeItem("lastRunId");
-        } else {
-          setIsLoading(false);
-        }
       }
-    } catch (error) {
-      console.error(error);
-      window.localStorage.removeItem("lastRunId");
       setIsLoading(false);
-    }
-  };
+    }, 3000);
 
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      if (runId) {
-        console.log("Checking runId", runId);
-        handleCheckRunId(runId);
-      }
-    }, 5000);
-    intervalRef.current = interval;
-
-    return () => clearInterval(interval);
-  }, [runId]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      const placeholdersLen = loadingPlaceholder.length;
-      setLoadingPlaceholderIdx((prevIdx) => (prevIdx + 1) % placeholdersLen);
-      if (loadingPlaceholderIdx === placeholdersLen - 1) {
-        clearInterval(interval);
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [isLoading]);
-
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["tokens"] });
-  }, [mdResult]);
-
-  useEffect(() => {
-    // Handle load last article
-    const lastArticle = window.localStorage.getItem("lastArticle");
-    if (lastArticle) {
-      setMdResult(lastArticle);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkLastRun();
-  }, []);
-
-  const checkLastRun = async () => {
-    // get last run id from local storage
-    const lastRunId = window.localStorage.getItem("lastRunId");
-    if (lastRunId) {
-      // Not finished yet
-      setIsLoading(true);
-      toast({
-        title: "Recovering last session",
-        description:
-          "You last report is not finished yet. We are recovering it for you.",
-      });
-      handleCheckRunId(lastRunId);
-    }
-  };
+    return () => {
+      clearInterval(intervalRef.current);
+    };
+  }, [needRefetch]);
 
   return (
-    <Card className="rounded-none w-full">
+    <Card className="rounded-none w-full h-screen">
       <CardHeader>
         <CardTitle>ThinkForce (Private Early Access v0.0.1)</CardTitle>
         <CardDescription>
@@ -232,45 +154,23 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
             <Button type="submit" className="mt-4" disabled={isLoading}>
               {isLoading ? (
                 <div className="flex gap-2 items-center">
-                  Generating <Spinner />
+                  Generate <Spinner />
                 </div>
               ) : (
                 "Generate"
               )}
             </Button>
-            {isLoading && (
-              <div className="">
-                {loadingPlaceholder[loadingPlaceholderIdx]}
-              </div>
-            )}
           </form>
         </Form>
         <div className="my-4">
           <Separator />
         </div>
         <div className="flex justify-between items-center">
-          <CardTitle className="">Result</CardTitle>
-          {/* <Button
-                variant="outline"
-                onClick={() => {
-                  getRawMDFile();
-                }}
-              >
-                Download PDF
-              </Button> */}
+          <CardTitle className="">Current jobs</CardTitle>
         </div>
         <div className="mt-3">
-          {mdResult !== "" ? (
-            <div>
-              <Markdown className="markdown">{mdResult}</Markdown>
-            </div>
-          ) : (
-            <CardDescription className="">
-              Your result will be displayed here.
-              <br />
-              Please don't close the tab while the content is being generated.
-            </CardDescription>
-          )}
+          {isLoading && <Spinner />}
+          {isLoading ? null : doc && <Job doc={doc} />}
         </div>
       </CardContent>
     </Card>

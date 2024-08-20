@@ -1,9 +1,10 @@
-import { logger } from "@trigger.dev/sdk/v3";
+import { envvars, logger } from "@trigger.dev/sdk/v3";
 import { batchQa } from "../trigger/batchQa";
 import { getModel } from "./completion";
 import { ExaSearch } from "./exa";
 import { SearchResultItem, SearchResults } from "./search";
 import { batchPersonaQA } from "../trigger/batchPersona";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 interface PersonaPackage {
   persona: string;
@@ -36,8 +37,13 @@ export class StormOutlineGen {
   relatedTopics: string[];
   sources: SearchResultItem[];
   searchCount: number;
+  // userId: string;
+  // runId: string;
 
-  constructor(modelName: string, temperature: number) {
+  constructor(
+    modelName: string,
+    temperature: number,
+  ) {
     this.modelName = modelName;
     this.temperature = temperature;
     this.inputTokens = 0;
@@ -47,6 +53,8 @@ export class StormOutlineGen {
     this.relatedTopics = [];
     this.sources = [];
     this.searchCount = 0;
+    // this.userId = userId;
+    // this.runId = runId;
   }
 
   initOutline(): OutlineResponse {
@@ -178,10 +186,26 @@ export class StormOutlineGen {
     return ["Expert", "Novice", "Hobbyist"];
   }
 
-  async generateContext(topic: string): Promise<string> {
+  async generateContext(
+    topic: string,
+    userId: string,
+    runId: string,
+  ): Promise<string> {
+    const supabaseUrl = await envvars.retrieve("SUPABASE_URL");
+    const supabaseKey = await envvars.retrieve("SUPABASE_SERVICE_KEY");
+    const supa = createClient(supabaseUrl.value, supabaseKey.value);
+
     // For each personas, gen 3 questions base on persona
+    await supa.from("doc_meta").update({
+      status: "searching",
+    }).eq("user_id", userId).eq("run_id", runId);
+
     const search = await this.preSearch(topic);
     this.sources = search.results;
+
+    await supa.from("doc_meta").update({
+      status: "persona",
+    }).eq("user_id", userId).eq("run_id", runId);
 
     const batchPersonaQARun = await batchPersonaQA.triggerAndWait({
       modelName: this.modelName,
@@ -386,7 +410,11 @@ export class StormOutlineGen {
     return "";
   }
 
-  async generateOutline(topic: string): Promise<OutlineResponse> {
+  async generateOutline(
+    topic: string,
+    userId: string,
+    runId: string,
+  ): Promise<OutlineResponse> {
     // Gen naive outline
     this.naiveOutline = await this.generateNaiveOutline(topic);
 
@@ -402,7 +430,7 @@ export class StormOutlineGen {
     });
 
     // Iterate over personas and and generate context
-    const context = await this.generateContext(topic);
+    const context = await this.generateContext(topic, userId, runId);
     logger.info("Generated context", { context });
 
     // Refine outline based on context
