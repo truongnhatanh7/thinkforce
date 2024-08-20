@@ -2,6 +2,7 @@ import { task } from "@trigger.dev/sdk/v3";
 import { StormOutlineGen } from "../app/outline";
 import { SearchResultItem } from "../app/search";
 import { personaQA } from "./persona";
+import { BatchQaResponse } from "./batchQa";
 
 export const batchPersonaQA = task({
   id: "batchPersonaQA",
@@ -50,6 +51,6 @@ export const batchPersonaQA = task({
       throw new Error("Some runs are not ok");
     }
 
-    return batchPersonaQARun.runs.map((run) => (run as any)!.output);
+    return batchPersonaQARun.runs.map((run) => (run as any)!.output as BatchQaResponse);
   },
 });

@@ -1,7 +1,7 @@
 import { logger } from "@trigger.dev/sdk/v3";
 import { batchWrite } from "../trigger/writeBatch";
 import { getGenCost } from "./completion";
-import { GOOGLE_SEARCH_PRICE } from "./const";
+import { EXA_SEARCH_PRICE, GOOGLE_SEARCH_PRICE } from "./const";
 import { OutlineResponse, StormOutlineGen } from "./outline";
 import { PolishEngine } from "./polish";
 import { SearchResultItem } from "./search";
@@ -181,9 +181,8 @@ export class StormEngine {
               this.runCfg.outlineCfg.modelName,
               _outline.inputTokens,
               _outline.outputTokens,
-            ) +
-              _outline.searchCount * GOOGLE_SEARCH_PRICE,
-            searchCost: _outline.searchCount * GOOGLE_SEARCH_PRICE,
+            ) + EXA_SEARCH_PRICE,
+            searchCost: EXA_SEARCH_PRICE,
             searchCount: _outline.searchCount,
           },
           {

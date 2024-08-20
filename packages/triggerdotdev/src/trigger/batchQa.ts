@@ -1,9 +1,12 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { SearchResultItem } from "../app/search";
 import { qa } from "./qa";
+import { GenAnswerResponse } from "../app/outline";
+
+export type BatchQaResponse = GenAnswerResponse[];
 
 export const batchQa = task({
-  id: "qaBatch",
+  id: "batchQa",
   retry: {
     maxAttempts: 3,
     minTimeoutInMs: 1000,
@@ -53,6 +56,6 @@ export const batchQa = task({
       throw new Error("Some runs are not ok");
     }
 
-    return results.runs.map((run) => (run as any)!.output);
+    return results.runs.map((run) => (run as any)!.output as GenAnswerResponse);
   },
 });

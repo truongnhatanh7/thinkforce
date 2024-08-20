@@ -151,8 +151,8 @@ importers:
         specifier: ^0.2.6
         version: 0.2.6(langchain@0.2.13(@aws-sdk/client-s3@3.626.0)(@aws-sdk/credential-provider-node@3.624.0(@aws-sdk/client-sso-oidc@3.624.0(@aws-sdk/client-sts@3.624.0))(@aws-sdk/client-sts@3.624.0))(@langchain/google-genai@0.0.25)(@supabase/supabase-js@2.45.1)(fast-xml-parser@4.4.1)(ignore@5.3.1)(jsdom@24.1.1)(openai@4.55.0(zod@3.23.8))(ws@8.18.0))
       '@trigger.dev/sdk':
-        specifier: 3.0.0-beta.53
-        version: 3.0.0-beta.53(typescript@5.5.4)
+        specifier: 3.0.0-beta.54
+        version: 3.0.0-beta.54(typescript@5.5.4)
       exa-js:
         specifier: ^1.0.14
         version: 1.0.14
@@ -1439,16 +1439,16 @@ packages:
     peerDependencies:
       react: ^18.0.0
 
-  '@trigger.dev/core-backend@3.0.0-beta.53':
-    resolution: {integrity: sha512-+mtkIb2EZew79bKPLyXDKKW/H+3OqqxSwvNprZCWx5LB/i9tB8pAimzpzyGWcsC6vChSGYsbMSRjFoHti/K+Rw==}
+  '@trigger.dev/core-backend@3.0.0-beta.54':
+    resolution: {integrity: sha512-oyfv7hRxy0vSPfHBpQRuCJcokIrS0xQZI2EAAtliOKuV/JAKjD3pleDUpadbMvB/5GNJ6/fiE+/i3qRNdOQJ7Q==}
     engines: {node: '>=18.0.0'}
 
-  '@trigger.dev/core@3.0.0-beta.53':
-    resolution: {integrity: sha512-xElTBEh1VXtIdPg3inVtGJaTKp/TnkpPNPjCpI0v7BjPa16XTpzSXI4V3Nzay/tNHjKsu0Uec9zslKZXeIi+Dw==}
+  '@trigger.dev/core@3.0.0-beta.54':
+    resolution: {integrity: sha512-ItTaNzkNg3zdsIx98Ob56H5BkhUyp07+iBcB0Cx9gbuPbBc6CKszP2edEo/LhH3zSUTOaRcVwdNYm2FiAkxvPA==}
     engines: {node: '>=18.0.0'}
 
-  '@trigger.dev/sdk@3.0.0-beta.53':
-    resolution: {integrity: sha512-wSAxIXH/YZxqv1dIul3k1KN0e6AoiUQLAFggfgZhFbsaV+FHIXVwQ7+DuKS7YtfqBZfao5MIwAsB815Qg7q6gQ==}
+  '@trigger.dev/sdk@3.0.0-beta.54':
+    resolution: {integrity: sha512-9zu9KmKyJkPLlc5jsKPZJt/89b/KqHLDMLlY0oGnnE/LVMAyOyfOvwDsw33hZ+69ShRPNACn1LqwSqy79+dFpw==}
     engines: {node: '>=18.0.0'}
 
   '@tsconfig/node18@18.2.4':
@@ -5149,11 +5149,11 @@ snapshots:
       '@tanstack/query-core': 5.51.21
       react: 18.3.1
 
-  '@trigger.dev/core-backend@3.0.0-beta.53':
+  '@trigger.dev/core-backend@3.0.0-beta.54':
     dependencies:
       '@opentelemetry/api': 1.9.0
 
-  '@trigger.dev/core@3.0.0-beta.53':
+  '@trigger.dev/core@3.0.0-beta.54':
     dependencies:
       '@google-cloud/precise-date': 4.0.0
       '@opentelemetry/api': 1.9.0
@@ -5179,13 +5179,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@trigger.dev/sdk@3.0.0-beta.53(typescript@5.5.4)':
+  '@trigger.dev/sdk@3.0.0-beta.54(typescript@5.5.4)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/api-logs': 0.48.0
       '@opentelemetry/semantic-conventions': 1.25.1
-      '@trigger.dev/core': 3.0.0-beta.53
-      '@trigger.dev/core-backend': 3.0.0-beta.53
+      '@trigger.dev/core': 3.0.0-beta.54
+      '@trigger.dev/core-backend': 3.0.0-beta.54
       chalk: 5.3.0
       cronstrue: 2.50.0
       debug: 4.3.6
