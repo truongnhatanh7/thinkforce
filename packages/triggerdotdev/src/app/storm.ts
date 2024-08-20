@@ -1,4 +1,4 @@
-import { logger } from "@trigger.dev/sdk/v3";
+import { envvars, logger } from "@trigger.dev/sdk/v3";
 import { batchWrite } from "../trigger/writeBatch";
 import { getGenCost } from "./completion";
 import { EXA_SEARCH_PRICE, GOOGLE_SEARCH_PRICE } from "./const";
@@ -7,6 +7,7 @@ import { PolishEngine } from "./polish";
 import { SearchResultItem } from "./search";
 import { UploadEngine } from "./upload";
 import { WriteArticleEngine, WriteArticleResponse } from "./writeArticle";
+import { createClient } from "@supabase/supabase-js";
 
 export interface StormResponse {
   data: {
@@ -82,16 +83,31 @@ export class StormEngine {
     return rr;
   }
 
+  async getSupa() {
+    const supabaseUrl = await envvars.retrieve("SUPABASE_URL");
+    const supabaseKey = await envvars.retrieve("SUPABASE_SERVICE_KEY");
+    return createClient(supabaseUrl.value, supabaseKey.value);
+  }
+
   async run(topic: string, outline = ""): Promise<StormResponse> {
+    const supa = await this.getSupa();
+
     // Step 1: Generate Outline
     const outlineEngine = new StormOutlineGen(
       this.runCfg.outlineCfg.modelName,
       this.runCfg.outlineCfg.temperature,
+      // supa,
+      // this.userId,
+      // this.runCfg.runId,
     );
 
     let _outline: OutlineResponse = outlineEngine.initOutline();
     if (outline === "") {
-      const generatedOutline = await outlineEngine.generateOutline(topic);
+      const generatedOutline = await outlineEngine.generateOutline(
+        topic,
+        this.userId,
+        this.runCfg.runId,
+      );
       _outline = generatedOutline;
     }
     // TODO: Else, improve the outline
@@ -101,6 +117,10 @@ export class StormEngine {
     logger.info("[Outline]", { _outline });
 
     // Step 2: Write Article
+    await supa.from("doc_meta").update({
+      status: "writing",
+    }).eq("user_id", this.userId).eq("run_id", this.runCfg.runId);
+
     const title = rr[0];
     let article: WriteArticleResponse[] = [{
       index: -1,
@@ -141,6 +161,10 @@ export class StormEngine {
     logger.info("[Article]", { article });
 
     // Step 3: Post processing
+    await supa.from("doc_meta").update({
+      status: "polishing",
+    }).eq("user_id", this.userId).eq("run_id", this.runCfg.runId);
+
     const polishEngine = new PolishEngine(
       this.runCfg.polishCfg.modelName,
       this.runCfg.polishCfg.temperature,
@@ -157,12 +181,18 @@ export class StormEngine {
     logger.info("[Polished Article]", { textArticle });
 
     // Upload to R2
+    await supa.from("doc_meta").update({
+      status: "uploading",
+    }).eq("user_id", this.userId).eq("run_id", this.runCfg.runId);
     const uploadEngine = new UploadEngine();
     await uploadEngine.uploadToR2(
       this.runCfg.runId,
       this.userId,
       textArticle,
     );
+    await supa.from("doc_meta").update({
+      status: "completed",
+    }).eq("user_id", this.userId).eq("run_id", this.runCfg.runId);
 
     return {
       data: {
