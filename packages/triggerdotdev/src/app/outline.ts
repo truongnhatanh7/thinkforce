@@ -178,14 +178,6 @@ export class StormOutlineGen {
     return ["Expert", "Novice", "Hobbyist"];
   }
 
-  private sourceArToObj(): { [key: string]: SearchResultItem } {
-    const obj: { [key: string]: SearchResultItem } = {};
-    for (let i = 0; i < this.sources.length; i++) {
-      obj[`${this.sources[i].link}`] = this.sources[i];
-    }
-    return obj;
-  }
-
   async generateContext(topic: string): Promise<string> {
     // For each personas, gen 3 questions base on persona
     const search = await this.preSearch(topic);
@@ -269,7 +261,6 @@ export class StormOutlineGen {
     topic: string,
     sources: SearchResultItem[],
   ): Promise<GenAnswerResponse> {
-    // logger.info("Generating answer", { persona, question, topic });
     this.sources = sources;
 
     const model = await getModel(this.modelName, this.temperature);
@@ -303,12 +294,6 @@ export class StormOutlineGen {
     if (response) {
       this.inputTokens += response.usage_metadata?.input_tokens || 0;
       this.outputTokens += response.usage_metadata?.output_tokens || 0;
-      // logger.info("Generated answer", {
-      //   persona,
-      //   question,
-      //   topic,
-      //   answer: response.content.toString(),
-      // });
       this.searchCount += 1;
       return {
         answer: response.content.toString(),
@@ -366,6 +351,41 @@ export class StormOutlineGen {
     return "";
   }
 
+  private async nonRepeatableOutline(outline: string): Promise<string> {
+    let model = await getModel(this.modelName, this.temperature);
+    const SYSTEM_PROMPT = `
+    You are a researcher that is good at refining the outline of a report for a writer.
+    Given a report, you job is to wording parts that sounds repetitive so that when the writer reads it, they will know what to write and avoid repetition.
+
+    You MUST follow these rules STRICTLY:
+    - You MUST KEEP the same format of the outline.
+    - You MUST NOT add any extra information.
+    - Only return the refined outline, don't add any irrelevant words.
+    `;
+    const USER_PROMPT = `
+    Here's the outline: ${outline}
+    `;
+
+    const response = await model?.invoke([
+      {
+        type: "system",
+        content: SYSTEM_PROMPT,
+      },
+      {
+        type: "user",
+        content: USER_PROMPT,
+      },
+    ]);
+
+    if (response) {
+      this.inputTokens += response.usage_metadata?.input_tokens || 0;
+      this.outputTokens += response.usage_metadata?.output_tokens || 0;
+      return response.content.toString();
+    }
+
+    return "";
+  }
+
   async generateOutline(topic: string): Promise<OutlineResponse> {
     // Gen naive outline
     this.naiveOutline = await this.generateNaiveOutline(topic);
@@ -388,17 +408,21 @@ export class StormOutlineGen {
     // Refine outline based on context
     const refinedOutline = await this.refineOutline(context, topic);
 
+    // Refine the outline to remove repetition
+    const nonRepeatableOutline = await this.nonRepeatableOutline(
+      refinedOutline,
+    );
+
     logger.info("Refined outline", {
       naiveOutline: this.naiveOutline,
       naiveOutlineLength: this.naiveOutline.length,
-      refinedOutline,
-      refinedOutlineLength: refinedOutline.length,
+      nonRepeatableOutline,
       inputTokens: this.inputTokens,
       outputTokens: this.outputTokens,
     });
 
     return {
-      outline: refinedOutline,
+      outline: nonRepeatableOutline,
       sources: this.sources,
       inputTokens: this.inputTokens,
       outputTokens: this.outputTokens,
