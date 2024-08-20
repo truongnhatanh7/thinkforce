@@ -1,5 +1,5 @@
 import { logger } from "@trigger.dev/sdk/v3";
-import { batchQa } from "../trigger/qaBatch";
+import { batchQa } from "../trigger/batchQa";
 import { getModel } from "./completion";
 import { ExaSearch } from "./exa";
 import { SearchResultItem, SearchResults } from "./search";

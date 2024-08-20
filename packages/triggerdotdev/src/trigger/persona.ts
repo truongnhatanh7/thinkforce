@@ -1,8 +1,14 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { StormOutlineGen } from "../app/outline";
 import { SearchResultItem } from "../app/search";
-import { batchQa } from "./qaBatch";
+import { batchQa } from "./batchQa";
 import { qa } from "./qa";
+
+export interface PersonaQAResponse {
+  persona: string;
+  question: string;
+  answer: string;
+}
 
 export const personaQA = task({
   id: "personaQA",
@@ -56,16 +62,12 @@ export const personaQA = task({
       throw new Error("Some runs are not ok");
     }
 
-    return qaRes.output.map((qaPair: {
-      persona: string;
-      question: string;
-      answer: string;
-    }) => {
+    return qaRes.output.map((qaPair) => {
       return ({
         persona: qaPair.persona,
         question: qaPair.question,
         answer: qaPair.answer,
-      });
+      } as PersonaQAResponse);
     });
   },
 });
