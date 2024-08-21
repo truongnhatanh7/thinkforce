@@ -154,8 +154,8 @@ importers:
         specifier: ^2.45.1
         version: 2.45.1
       '@trigger.dev/sdk':
-        specifier: 3.0.0-beta.54
-        version: 3.0.0-beta.54(typescript@5.5.4)
+        specifier: 3.0.0-beta.55
+        version: 3.0.0-beta.55(typescript@5.5.4)
       exa-js:
         specifier: ^1.0.14
         version: 1.0.14
@@ -1442,16 +1442,16 @@ packages:
     peerDependencies:
       react: ^18.0.0
 
-  '@trigger.dev/core-backend@3.0.0-beta.54':
-    resolution: {integrity: sha512-oyfv7hRxy0vSPfHBpQRuCJcokIrS0xQZI2EAAtliOKuV/JAKjD3pleDUpadbMvB/5GNJ6/fiE+/i3qRNdOQJ7Q==}
+  '@trigger.dev/core-backend@3.0.0-beta.55':
+    resolution: {integrity: sha512-JLRaiawxVyG0fparYskiluPxWqzFXrqXKJFMKW6CgXklRCHMRjH5ezai62yUxAeKM8LX2BIOhOpeXB3z50Re1w==}
     engines: {node: '>=18.0.0'}
 
-  '@trigger.dev/core@3.0.0-beta.54':
-    resolution: {integrity: sha512-ItTaNzkNg3zdsIx98Ob56H5BkhUyp07+iBcB0Cx9gbuPbBc6CKszP2edEo/LhH3zSUTOaRcVwdNYm2FiAkxvPA==}
+  '@trigger.dev/core@3.0.0-beta.55':
+    resolution: {integrity: sha512-MXfBnM3HvT+RyXwlIeQjUJ0lWKg5vFrPugwy5AbDaio/p8QLyRpEHIL8zcMU6rUxdjD7jVbZk3KTUnGRLRZ+tw==}
     engines: {node: '>=18.0.0'}
 
-  '@trigger.dev/sdk@3.0.0-beta.54':
-    resolution: {integrity: sha512-9zu9KmKyJkPLlc5jsKPZJt/89b/KqHLDMLlY0oGnnE/LVMAyOyfOvwDsw33hZ+69ShRPNACn1LqwSqy79+dFpw==}
+  '@trigger.dev/sdk@3.0.0-beta.55':
+    resolution: {integrity: sha512-B4mS79S0esp5yRun/siDHIRfD8ZF8S6dadYayq0Irj2izFx50R3bUJ+BXh6gPx/4cF26NL7jcJMOwtW8P9PsFQ==}
     engines: {node: '>=18.0.0'}
 
   '@tsconfig/node18@18.2.4':
@@ -5152,11 +5152,11 @@ snapshots:
       '@tanstack/query-core': 5.51.21
       react: 18.3.1
 
-  '@trigger.dev/core-backend@3.0.0-beta.54':
+  '@trigger.dev/core-backend@3.0.0-beta.55':
     dependencies:
       '@opentelemetry/api': 1.9.0
 
-  '@trigger.dev/core@3.0.0-beta.54':
+  '@trigger.dev/core@3.0.0-beta.55':
     dependencies:
       '@google-cloud/precise-date': 4.0.0
       '@opentelemetry/api': 1.9.0
@@ -5182,13 +5182,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@trigger.dev/sdk@3.0.0-beta.54(typescript@5.5.4)':
+  '@trigger.dev/sdk@3.0.0-beta.55(typescript@5.5.4)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/api-logs': 0.48.0
       '@opentelemetry/semantic-conventions': 1.25.1
-      '@trigger.dev/core': 3.0.0-beta.54
-      '@trigger.dev/core-backend': 3.0.0-beta.54
+      '@trigger.dev/core': 3.0.0-beta.55
+      '@trigger.dev/core-backend': 3.0.0-beta.55
       chalk: 5.3.0
       cronstrue: 2.50.0
       debug: 4.3.6
