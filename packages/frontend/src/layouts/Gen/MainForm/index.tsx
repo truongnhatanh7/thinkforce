@@ -83,6 +83,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
       queryClient.removeQueries({
         queryKey: ["get-doc", doc?.file_name],
       });
+      setDoc(undefined);
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
