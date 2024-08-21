@@ -25,6 +25,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Job from "./Job";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface MainFormProps {}
 
@@ -46,6 +47,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
   const [isLoading, setIsLoading] = useState(false);
   const tokens = useTokensQuery();
   const intervalRef = useRef<number>();
+  const queryClient = useQueryClient();
 
   useEffect(() => {}, []);
   const onSubmit = (values: z.infer<typeof GenSchema>) => {
@@ -100,6 +102,9 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
     intervalRef.current = window.setInterval(async () => {
       const res = await handleGetDoc();
       if (res?.status === "completed") {
+        await queryClient.invalidateQueries({
+          queryKey: ["list-docs"],
+        });
         clearInterval(intervalRef.current);
       }
       setIsLoading(false);
