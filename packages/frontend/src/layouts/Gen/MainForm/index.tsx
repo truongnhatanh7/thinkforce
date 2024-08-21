@@ -55,7 +55,6 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
   };
 
   const handleSubmitGenRequest = async (topic: string) => {
-    setNeedRefetch(!needRefetch);
     setIsLoading(true);
     try {
       // Call edge func
@@ -84,6 +83,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
         queryKey: ["get-doc", doc?.file_name],
       });
       setDoc(undefined);
+      setNeedRefetch(!needRefetch);
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
