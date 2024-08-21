@@ -14,6 +14,9 @@ export const handleListDoc = async (): Promise<DocMeta[]> => {
     .from("doc_meta")
     .select("*")
     .eq("user_id", userId)
+    .order("created_at", {
+      ascending: false,
+    })
     .limit(10); // Only 10 for now
 
   if (error) {
