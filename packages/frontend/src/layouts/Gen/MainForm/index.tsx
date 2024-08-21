@@ -158,7 +158,11 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
               )}
             />
 
-            <Button type="submit" className="mt-4" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="mt-4"
+              disabled={isLoading || !doc || doc.status !== "completed"}
+            >
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   Generate <Spinner />
