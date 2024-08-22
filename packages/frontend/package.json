@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite && pnpm dlx supabase functions serve --env-file ./supabase/.env.local",
+    "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
@@ -24,6 +24,7 @@
     "html2pdf": "^0.0.11",
     "lucide-react": "^0.427.0",
     "marked": "^14.0.0",
+    "md-to-pdf": "^5.2.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.52.2",

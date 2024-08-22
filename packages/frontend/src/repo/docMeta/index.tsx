@@ -77,6 +77,10 @@ export const handleGetLatestDoc = async () => {
     .single();
 
   if (doc.error) {
+    if (doc.error.code === "PGRST116") {
+      // No doc meta found -> new user with 0 docs
+      return undefined;
+    }
     throw new Error(doc.error.message);
   }
 

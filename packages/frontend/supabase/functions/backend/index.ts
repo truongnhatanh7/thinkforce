@@ -123,15 +123,6 @@ app.post("/gen/poll", async (c) => {
   const runId = c.req.query("runId") || "";
   const userId = c.req.query("userId") || "";
 
-  // const supabase = createClient(
-  //   Deno.env.get("X_SUPABASE_URL") ?? "",
-  //   Deno.env.get("X_SUPABASE_ANON_KEY") ?? "",
-  //   {
-  //     global: {
-  //       headers: { Authorization: c.req.header("Authorization") || "" },
-  //     },
-  //   },
-  // );
   console.log(runId, userId);
 
   try {
@@ -163,7 +154,7 @@ app.post("/gen/poll", async (c) => {
         S3,
         new GetObjectCommand({
           Bucket: Deno.env.get("R2_BUCKET_NAME") || "",
-          Key: `${userId}/${runId}.md`,
+          Key: `${userId}/${runId}.pdf`,
         }),
         { expiresIn: 3600 },
       );

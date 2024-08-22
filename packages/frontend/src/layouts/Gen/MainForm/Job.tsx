@@ -1,3 +1,4 @@
+import { useGetDocQuery } from "@/api/useDocQuery";
 import { Spinner } from "@/components/spinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -13,6 +14,7 @@ export interface JobProps {
 const Job: React.FC<JobProps> = ({ doc }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = React.useState(0);
+  const remoteDoc = useGetDocQuery((doc.file_name as string) || "");
 
   const handleResolveProgress = () => {
     switch (doc?.status) {
@@ -68,12 +70,14 @@ const Job: React.FC<JobProps> = ({ doc }) => {
 
   const handleGetDownloadLink = async () => {
     const url = await handleGetPresignedUrl(doc?.run_id || "");
-
+    console.log(url);
+    // const pdf = await mdToPdf({ content: remoteDoc.data || "" });
+    // console.log(pdf);
     // create a tag and click it
-    const a = window.document.createElement("a");
-    a.href = url;
-    a.download = doc?.file_name || "";
-    a.click();
+    // const a = window.document.createElement("a");
+    // a.href = url;
+    // a.download = doc?.file_name || "";
+    // a.click();
   };
 
   return (
