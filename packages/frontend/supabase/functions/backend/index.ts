@@ -154,7 +154,7 @@ app.post("/gen/poll", async (c) => {
         S3,
         new GetObjectCommand({
           Bucket: Deno.env.get("R2_BUCKET_NAME") || "",
-          Key: `${userId}/${runId}.pdf`,
+          Key: `${userId}/${runId}.md`,
         }),
         { expiresIn: 3600 },
       );

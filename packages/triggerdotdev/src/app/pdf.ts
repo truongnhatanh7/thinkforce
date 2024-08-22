@@ -9,13 +9,15 @@ export class PdfConverter {
 
   async convert() {
     logger.info("Converting markdown to pdf");
-    const pdf = await mdToPdf({ content: this.mdContent }).catch((err) => {
-      // Non retry able error
-      logger.error(err);
-    });
+    try {
+      const pdf = await mdToPdf({ content: this.mdContent });
 
-    if (pdf) {
-      return pdf;
+      if (pdf) {
+        return pdf;
+      }
+    } catch (e: any) {
+      console.log(e);
+      logger.error(e.message);
     }
   }
 }
