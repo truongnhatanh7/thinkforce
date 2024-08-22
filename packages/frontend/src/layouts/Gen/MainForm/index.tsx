@@ -44,7 +44,6 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
     },
   });
   const [doc, setDoc] = useState<Tables<"doc_meta">>();
-  const [isGenerating, setIsGenerating] = useState(false);
   const [needRefetch, setNeedRefetch] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const tokens = useTokensQuery();
