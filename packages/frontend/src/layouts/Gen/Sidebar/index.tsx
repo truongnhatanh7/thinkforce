@@ -13,7 +13,7 @@ const Sidebar = () => {
   const docs = useListDocQuery();
 
   if (docs.error || !docs.data) {
-    return <div>Unexpected error</div>;
+    return <></>;
   }
 
   return (

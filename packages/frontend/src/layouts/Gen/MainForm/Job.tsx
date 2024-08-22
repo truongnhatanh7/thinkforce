@@ -52,18 +52,22 @@ const Job: React.FC<JobProps> = ({ doc }) => {
     baseUrl.pathname = "/functions/v1/backend/gen/poll";
     baseUrl.searchParams.append("userId", userId || "");
     baseUrl.searchParams.append("runId", runId || "");
-
-    const req = await fetch(baseUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.data.session?.access_token}`,
-      },
-    });
-
-    const res = await req.json();
-    setIsLoading(false);
-    return res.signedUrl;
+    try {
+      const req = await fetch(baseUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.data.session?.access_token}`,
+        },
+      });
+      const res = await req.json();
+      setIsLoading(false);
+      return res.signedUrl;
+    } catch (err) {
+      setIsLoading(false);
+      console.error(err);
+      return "";
+    }
   };
 
   const handleGetDownloadLink = async () => {

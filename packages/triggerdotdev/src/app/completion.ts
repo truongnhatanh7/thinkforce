@@ -51,7 +51,6 @@ export const getModel = async (
     return new ChatGoogleGenerativeAI({
       model: "gemini-1.5-flash",
       temperature: temperature,
-      maxRetries: 2,
       apiKey: googleStudioAIApiKey.value,
     });
   } else {

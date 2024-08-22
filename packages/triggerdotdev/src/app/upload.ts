@@ -1,5 +1,4 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { TRIGGER_PROJECT_NAME } from "../../trigger.config";
 import { envvars, logger } from "@trigger.dev/sdk/v3";
 
 export class UploadEngine {
@@ -31,7 +30,7 @@ export class UploadEngine {
   async uploadToR2(
     runId: string,
     userId: string,
-    article: string,
+    article: string | Buffer,
     prefix = "",
     ext = "md",
   ) {

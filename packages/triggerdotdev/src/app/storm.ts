@@ -8,6 +8,7 @@ import { SearchResultItem } from "./search";
 import { UploadEngine } from "./upload";
 import { WriteArticleEngine, WriteArticleResponse } from "./writeArticle";
 import { createClient } from "@supabase/supabase-js";
+import { PdfConverter } from "./pdf";
 
 export interface StormResponse {
   data: {
@@ -190,6 +191,17 @@ export class StormEngine {
       this.userId,
       textArticle,
     );
+
+    const pdfEngine = new PdfConverter(textArticle);
+    const pdf = await pdfEngine.convert();
+    await uploadEngine.uploadToR2(
+      this.runCfg.runId,
+      this.userId,
+      pdf?.content as Buffer,
+      "",
+      "pdf",
+    );
+
     await supa.from("doc_meta").update({
       status: "completed",
     }).eq("user_id", this.userId).eq("run_id", this.runCfg.runId);

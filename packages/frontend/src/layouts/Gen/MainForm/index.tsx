@@ -26,6 +26,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Job from "./Job";
 import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/use-toast";
 
 interface MainFormProps {}
 
@@ -48,6 +49,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
   const tokens = useTokensQuery();
   const intervalRef = useRef<number>();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   useEffect(() => {}, []);
   const onSubmit = (values: z.infer<typeof GenSchema>) => {
@@ -55,8 +57,18 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
   };
 
   const handleSubmitGenRequest = async (topic: string) => {
-    setIsLoading(true);
+    if (tokens.data === 0) {
+      toast({
+        variant: "destructive",
+        title: "Not enough token",
+        description: "Please buy more tokens to continue",
+      });
+
+      return;
+    }
+
     try {
+      setIsLoading(true);
       // Call edge func
       const session = await supabase.auth.getSession();
       const accessToken = session.data.session?.access_token;
@@ -161,7 +173,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
             <Button
               type="submit"
               className="mt-4"
-              disabled={isLoading || !doc || doc.status !== "completed"}
+              disabled={isLoading || (doc && doc?.status !== "completed")}
             >
               {isLoading ? (
                 <div className="flex gap-2 items-center">
