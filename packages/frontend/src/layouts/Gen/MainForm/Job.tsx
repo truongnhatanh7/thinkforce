@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tables } from "@/repo/database.types";
 import { supabase } from "@/supabase";
 import React, { useEffect, useState } from "react";
+import { marked } from "marked";
 
 export interface JobProps {
   doc: Tables<"doc_meta">;
@@ -71,13 +72,32 @@ const Job: React.FC<JobProps> = ({ doc }) => {
   };
 
   const handleGetDownloadLink = async () => {
-    const url = await handleGetPresignedUrl(doc?.run_id || "");
+    const presignedUrl = await handleGetPresignedUrl(doc?.run_id || "");
 
     // create a tag and click it
-    const a = window.document.createElement("a");
+    const mdReq = await fetch(presignedUrl);
+    const md = await mdReq.text();
+
+    const htmlString = await marked(md);
+    const blob = new Blob([htmlString], { type: "text/html" });
+    // Create an object URL for the Blob
+    const url = URL.createObjectURL(blob);
+
+    // Create a temporary anchor element
+    const a = document.createElement("a");
     a.href = url;
-    a.download = doc?.file_name || "";
+    a.download = "sample.html"; // Set the file name
+
+    // Programmatically click the anchor to trigger the download
     a.click();
+
+    // Clean up by revoking the object URL
+    URL.revokeObjectURL(url);
+
+    // const a = window.document.createElement("a");
+    // a.href = url;
+    // a.download = doc?.file_name || "";
+    // a.click();
   };
 
   return (
