@@ -116,6 +116,18 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
     intervalRef.current = window.setInterval(async () => {
       const res = await handleGetDoc();
       if (res?.status === "completed") {
+        // Handle timeout
+        // If doc is created more than 10 minutes and not completed -> cancel interval
+        if (
+          new Date(res.created_at).getTime() + 10 * 60 * 1000 <
+          new Date().getTime()
+        ) {
+          clearInterval(intervalRef.current);
+          setDoc(undefined);
+          setIsLoading(false);
+          return;
+        }
+
         await queryClient.invalidateQueries({
           queryKey: ["list-docs"],
         });
@@ -137,8 +149,6 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
           ThinkForce replicate the process of a human researcher, hence, once
           you pressed the "Generate" button, it will take some time to process
           the information <b>(5-8 minutes)</b>.
-          <br />
-          After that, you could download the generated content.
           <br />
           <br />
           <i>

@@ -5,11 +5,12 @@ import { refineMarkdownTitleToFlatString } from "@/lib/utils";
 import { supabase } from "@/supabase";
 import { HistoryIcon, MenuIcon, WandSparklesIcon } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [width, setWidth] = useState("w-12");
+  const navigate = useNavigate();
 
   const docs = useListDocQuery();
 
@@ -19,6 +20,7 @@ const Sidebar = () => {
 
   const handleLogOut = async () => {
     await supabase.auth.signOut();
+    navigate("/ea-auth");
   };
 
   return (
