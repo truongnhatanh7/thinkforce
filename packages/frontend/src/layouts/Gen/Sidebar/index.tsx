@@ -2,6 +2,7 @@ import { useListDocQuery } from "@/api/useDocQuery";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { refineMarkdownTitleToFlatString } from "@/lib/utils";
+import { supabase } from "@/supabase";
 import { HistoryIcon, MenuIcon, WandSparklesIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -15,6 +16,10 @@ const Sidebar = () => {
   if (docs.error || !docs.data) {
     return <></>;
   }
+
+  const handleLogOut = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <div
@@ -82,7 +87,11 @@ const Sidebar = () => {
         </div>
 
         <div className="mt-auto">
-          <Button className="rounded-none w-full" variant="ghost">
+          <Button
+            className="rounded-none w-full"
+            variant="ghost"
+            onClick={() => handleLogOut()}
+          >
             Log out
           </Button>
         </div>
