@@ -1,6 +1,6 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { SearchResultItem } from "../app/search";
-import { WriteArticleEngine } from "../app/writeArticle";
+import { WriteArticleEngine, WriteArticleResponse } from "../app/writeArticle";
 
 export const write = task({
   id: "write",
@@ -28,14 +28,15 @@ export const write = task({
       topic: string;
       sources: SearchResultItem[];
     },
-  ) => {
+  ): Promise<WriteArticleResponse> => {
     const lines = payload.section.split("\n");
     if (lines.length === 1) {
       return {
         index: payload.index,
         content: payload.section,
-        inputTokens: 0,
-        outputTokens: 0,
+        inputGptTokens: 0,
+        outputGptTokens: 0,
+        sources: payload.sources,
       };
     }
 
