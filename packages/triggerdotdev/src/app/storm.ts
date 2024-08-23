@@ -10,6 +10,16 @@ import { WriteArticleEngine, WriteArticleResponse } from "./writeArticle";
 import { createClient } from "@supabase/supabase-js";
 import { PdfConverter } from "./pdf";
 
+export interface StepMeta {
+  name: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  modelName: string;
+  price: number;
+  searchCost?: number;
+  searchCount?: number;
+}
+
 export interface StormResponse {
   data: {
     title: string;
@@ -17,15 +27,7 @@ export interface StormResponse {
     article: string;
   };
   metadata: {
-    steps: {
-      name: string;
-      inputTokens?: number;
-      outputTokens?: number;
-      modelName: string;
-      price: number;
-      searchCost?: number;
-      searchCount?: number;
-    }[];
+    steps: StepMeta[];
   };
 }
 export class StormEngine {
@@ -154,8 +156,8 @@ export class StormEngine {
     sections.output.sort((a, b) => a.index - b.index);
 
     for (let sec of sections.output) {
-      writeInputTokens += sec.inputGptTokens;
-      writeOutputTokens += sec.outputGptTokens;
+      writeInputTokens += sec.inputGptTokens || 0;
+      writeOutputTokens += sec.outputGptTokens || 0;
       article.push(sec);
     }
 
@@ -192,18 +194,52 @@ export class StormEngine {
       textArticle,
     );
 
-    const pdfEngine = new PdfConverter(textArticle);
-    const pdf = await pdfEngine.convert();
-    await uploadEngine.uploadToR2(
-      this.runCfg.runId,
-      this.userId,
-      pdf?.content as Buffer,
-      "",
-      "pdf",
-    );
+    const stepMeta: StepMeta[] = [
+      {
+        name: "Outline",
+        inputTokens: _outline.inputTokens,
+        outputTokens: _outline.outputTokens,
+        modelName: this.runCfg.outlineCfg.modelName,
+        price: getGenCost(
+          this.runCfg.outlineCfg.modelName,
+          _outline.inputTokens,
+          _outline.outputTokens,
+        ) + EXA_SEARCH_PRICE,
+        searchCost: EXA_SEARCH_PRICE,
+        searchCount: _outline.searchCount,
+      },
+      {
+        name: "Write Article",
+        inputTokens: writeInputTokens,
+        outputTokens: writeOutputTokens,
+        modelName: this.runCfg.writeArticleCfg.modelName,
+        price: getGenCost(
+          this.runCfg.writeArticleCfg.modelName,
+          writeInputTokens,
+          writeOutputTokens,
+        ),
+      },
+      {
+        name: "Polish",
+        inputTokens: polishedArticle.inputTokens,
+        outputTokens: polishedArticle.outputTokens,
+        modelName: this.runCfg.polishCfg.modelName,
+        price: getGenCost(
+          this.runCfg.polishCfg.modelName,
+          polishedArticle.inputTokens,
+          polishedArticle.outputTokens,
+        ),
+      },
+    ];
+
+    const totalCost = stepMeta.reduce((acc, step) => {
+      return acc + step.price;
+    }, 0);
 
     await supa.from("doc_meta").update({
       status: "completed",
+      cost: totalCost,
+      cost_details: stepMeta,
     }).eq("user_id", this.userId).eq("run_id", this.runCfg.runId);
 
     return {
@@ -213,43 +249,7 @@ export class StormEngine {
         article: textArticle,
       },
       metadata: {
-        steps: [
-          {
-            name: "Outline",
-            inputTokens: _outline.inputTokens,
-            outputTokens: _outline.outputTokens,
-            modelName: this.runCfg.outlineCfg.modelName,
-            price: getGenCost(
-              this.runCfg.outlineCfg.modelName,
-              _outline.inputTokens,
-              _outline.outputTokens,
-            ) + EXA_SEARCH_PRICE,
-            searchCost: EXA_SEARCH_PRICE,
-            searchCount: _outline.searchCount,
-          },
-          {
-            name: "Write Article",
-            inputTokens: writeInputTokens,
-            outputTokens: writeOutputTokens,
-            modelName: this.runCfg.writeArticleCfg.modelName,
-            price: getGenCost(
-              this.runCfg.writeArticleCfg.modelName,
-              writeInputTokens,
-              writeOutputTokens,
-            ),
-          },
-          {
-            name: "Polish",
-            inputTokens: polishedArticle.inputTokens,
-            outputTokens: polishedArticle.outputTokens,
-            modelName: this.runCfg.polishCfg.modelName,
-            price: getGenCost(
-              this.runCfg.polishCfg.modelName,
-              polishedArticle.inputTokens,
-              polishedArticle.outputTokens,
-            ),
-          },
-        ],
+        steps: stepMeta,
       },
     };
   }

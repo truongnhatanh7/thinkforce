@@ -1,6 +1,7 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { SearchResultItem } from "../app/search";
 import { write } from "./write";
+import { WriteArticleResponse } from "../app/writeArticle";
 
 export const batchWrite = task({
   id: "batchWrite",
@@ -46,6 +47,8 @@ export const batchWrite = task({
       throw new Error("Some runs are not ok");
     }
 
-    return results.runs.map((run) => (run as any)!.output);
+    return results.runs.map((run) =>
+      (run as any)!.output as WriteArticleResponse
+    );
   },
 });
