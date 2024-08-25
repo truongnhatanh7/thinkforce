@@ -11,6 +11,8 @@ export type Database = {
     Tables: {
       doc_meta: {
         Row: {
+          cost: number | null
+          cost_details: Json | null
           created_at: string
           file_name: string
           id: number
@@ -20,6 +22,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cost?: number | null
+          cost_details?: Json | null
           created_at?: string
           file_name: string
           id?: number
@@ -29,6 +33,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cost?: number | null
+          cost_details?: Json | null
           created_at?: string
           file_name?: string
           id?: number

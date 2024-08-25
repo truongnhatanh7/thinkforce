@@ -17,16 +17,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
 import { Tables } from "@/repo/database.types";
 import { handleGetLatestDoc } from "@/repo/docMeta";
 import { supabase } from "@/supabase";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Job from "./Job";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/use-toast";
 
 interface MainFormProps {}
 
@@ -44,14 +43,10 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
     },
   });
   const [doc, setDoc] = useState<Tables<"doc_meta">>();
-  const [needRefetch, setNeedRefetch] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const tokens = useTokensQuery();
-  const intervalRef = useRef<number>();
-  const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  useEffect(() => {}, []);
   const onSubmit = (values: z.infer<typeof GenSchema>) => {
     handleSubmitGenRequest(values.topic);
   };
@@ -78,7 +73,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
       }
 
       const baseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-      await fetch(`${baseUrl}/functions/v1/backend/gen/emit`, {
+      await fetch(`${baseUrl}/functions/v1/backend/v2/gen`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -91,55 +86,18 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
         }),
       });
 
-      queryClient.removeQueries({
-        queryKey: ["get-doc", doc?.file_name],
-      });
-      setDoc(undefined);
-      setNeedRefetch(!needRefetch);
+      const doc = await handleGetLatestDoc();
+
+      if (!doc) {
+        throw new Error("Doc not found");
+      }
+
+      setDoc(doc);
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
     }
   };
-
-  const handleGetDoc = async (): Promise<Tables<"doc_meta"> | undefined> => {
-    const docRes = await handleGetLatestDoc();
-    if (docRes) {
-      setDoc(docRes);
-      return docRes;
-    }
-  };
-
-  useEffect(() => {
-    // handle ongoing job
-    setIsLoading(true);
-    intervalRef.current = window.setInterval(async () => {
-      const res = await handleGetDoc();
-      if (res?.status === "completed") {
-        // Handle timeout
-        // If doc is created more than 10 minutes and not completed -> cancel interval
-        if (
-          new Date(res.created_at).getTime() + 10 * 60 * 1000 <
-          new Date().getTime()
-        ) {
-          clearInterval(intervalRef.current);
-          setDoc(undefined);
-          setIsLoading(false);
-          return;
-        }
-
-        await queryClient.invalidateQueries({
-          queryKey: ["list-docs"],
-        });
-        clearInterval(intervalRef.current);
-      }
-      setIsLoading(false);
-    }, 3000);
-
-    return () => {
-      clearInterval(intervalRef.current);
-    };
-  }, [needRefetch]);
 
   return (
     <Card className="rounded-none w-full h-screen">
@@ -148,7 +106,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
         <CardDescription>
           ThinkForce replicate the process of a human researcher, hence, once
           you pressed the "Generate" button, it will take some time to process
-          the information <b>(5-8 minutes)</b>.
+          the information <b>(around 1 minute)</b>.
           <br />
           <br />
           <i>
@@ -180,11 +138,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
               )}
             />
 
-            <Button
-              type="submit"
-              className="mt-4"
-              disabled={isLoading || (doc && doc?.status !== "completed")}
-            >
+            <Button type="submit" className="mt-4" disabled={isLoading}>
               {isLoading ? (
                 <div className="flex gap-2 items-center">
                   Generate <Spinner />
@@ -199,10 +153,15 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
           <Separator />
         </div>
         <div className="flex justify-between items-center">
-          <CardTitle className="">Current jobs</CardTitle>
+          <CardTitle className="">Current generation</CardTitle>
         </div>
         <div className="mt-3">
-          {isLoading && <Spinner />}
+          {isLoading && (
+            <div className="flex gap-1 items-center">
+              <Spinner />
+              <span>Please wait...</span>
+            </div>
+          )}
           {isLoading ? null : doc && <Job doc={doc} />}
         </div>
       </CardContent>
