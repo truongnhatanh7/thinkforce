@@ -26,6 +26,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Job from "./Job";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface MainFormProps {}
 
@@ -46,6 +47,7 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
   const [isLoading, setIsLoading] = useState(false);
   const tokens = useTokensQuery();
   const { toast } = useToast();
+  const queryclient = useQueryClient();
 
   const onSubmit = (values: z.infer<typeof GenSchema>) => {
     handleSubmitGenRequest(values.topic);
@@ -91,6 +93,10 @@ const MainForm: React.FC<MainFormProps> = ({}) => {
       if (!doc) {
         throw new Error("Doc not found");
       }
+
+      await queryclient.invalidateQueries({
+        queryKey: ["list-docs"],
+      });
 
       setDoc(doc);
       setIsLoading(false);
